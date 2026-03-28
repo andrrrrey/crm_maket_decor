@@ -1,0 +1,454 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ПОЛЬЗОВАТЕЛИ И РОЛИ ====================
+
+enum Role {
+  DIRECTOR
+  MANAGER
+  PRODUCTION
+  DESIGNER
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  login        String  @unique
+  passwordHash String
+  name         String
+  role         Role
+  isActive     Boolean @default(true)
+  phone        String?
+  avatarUrl    String?
+  wallpaper    String  @default("default")
+  theme        String  @default("light")
+  hasInfoAccess Boolean @default(false)
+  createdAt    DateTime @default(now())
+
+  settings         UserSettings?
+  clients          Client[]         @relation("ManagerClients")
+  contracts        Contract[]       @relation("ManagerContracts")
+  projects         Project[]        @relation("ManagerProjects")
+  designerMockups  Mockup[]         @relation("DesignerMockups")
+  managerTasks     ManagerTask[]
+  expenses         Expense[]
+  messages         Message[]
+  projectMessages  ProjectMessage[]
+  historyEntries   HistoryEntry[]
+  notifications    Notification[]
+}
+
+model UserSettings {
+  id         String @id @default(cuid())
+  userId     String @unique
+  openMonths Json   @default("[]")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ==================== ВХОДЯЩИЕ КЛИЕНТЫ ====================
+
+enum ClientStatus {
+  MEETING
+  DISCUSSION
+  ESTIMATE
+  CONTRACT
+  REJECTED
+}
+
+enum ProjectType {
+  WEDDING
+  CORPORATE
+  BIRTHDAY
+  OTHER
+}
+
+model Client {
+  id              String       @id @default(cuid())
+  number          Int          @default(autoincrement())
+  dateReceived    DateTime
+  meetingDate     String?
+  projectDate     DateTime?
+  venue           String?
+  projectType     ProjectType  @default(WEDDING)
+  status          ClientStatus @default(MEETING)
+  clientName      String
+  source          String?
+  projectIdea     String?
+  rejectionReason String?
+  isRejected      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  managerId String
+  manager   User   @relation("ManagerClients", fields: [managerId], references: [id])
+
+  estimates EstimateFile[]
+  contract  Contract?
+}
+
+// ==================== ФАЙЛЫ СМЕТ ====================
+
+model EstimateFile {
+  id            String   @id @default(cuid())
+  clientId      String?
+  contractId    String?
+  fileName      String
+  filePath      String
+  fileSize      Int
+  version       Int      @default(1)
+  isTeamVersion Boolean  @default(false)
+  uploadedAt    DateTime @default(now())
+
+  client   Client?   @relation(fields: [clientId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
+}
+
+// ==================== ДОГОВОРЫ ====================
+
+enum ContractMockupStatus {
+  APPROVED
+  WAITING
+  IN_PROGRESS
+  PENDING
+  TRANSFERRED
+  CANCELLED
+}
+
+model Contract {
+  id               String               @id @default(cuid())
+  contractNumber   Int                  @default(autoincrement())
+  dateSignedAt     DateTime
+  installDate      DateTime
+  mockupStatus     ContractMockupStatus @default(PENDING)
+  clientName       String
+  venue            String?
+  totalAmount      Decimal?
+  prepaymentDate   String?
+  prepaymentAmount Decimal?
+  invoiceNumber    String?
+  orgAmount        Decimal?
+  notes            String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  managerId      String
+  manager        User    @relation("ManagerContracts", fields: [managerId], references: [id])
+  sourceClientId String? @unique
+  sourceClient   Client? @relation(fields: [sourceClientId], references: [id])
+
+  estimates     EstimateFile[]
+  contractFiles ContractFile[]
+  project       Project?
+  mockupImages  MockupImage[]
+}
+
+model ContractFile {
+  id         String   @id @default(cuid())
+  contractId String
+  fileName   String
+  filePath   String
+  fileSize   Int
+  fileType   String
+  uploadedAt DateTime @default(now())
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model MockupImage {
+  id         String   @id @default(cuid())
+  contractId String
+  fileName   String
+  filePath   String
+  uploadedAt DateTime @default(now())
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+// ==================== ПРОЕКТЫ И КАЛЕНДАРЬ ====================
+
+model Project {
+  id            String   @id @default(cuid())
+  number        Int      @default(autoincrement())
+  date          DateTime
+  venue         String?
+  description   String?
+  month         String
+  calendarColor String   @default("#F472B6")
+  isCompleted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  managerId  String
+  manager    User     @relation("ManagerProjects", fields: [managerId], references: [id])
+  contractId String?  @unique
+  contract   Contract? @relation(fields: [contractId], references: [id])
+
+  tasks           ProjectTask[]
+  purchases       ProjectPurchase[]
+  projectMessages ProjectMessage[]
+  projectImages   ProjectImage[]
+  teamEstimate    String?
+}
+
+model CalendarEntry {
+  id        String   @id @default(cuid())
+  date      DateTime
+  label     String
+  color     String
+  entryType String
+  projectId String?
+}
+
+model ProjectTask {
+  id          String    @id @default(cuid())
+  projectId   String
+  title       String
+  isCompleted Boolean   @default(false)
+  completedBy String?
+  completedAt DateTime?
+  sortOrder   Int       @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectPurchase {
+  id          String  @id @default(cuid())
+  projectId   String
+  title       String
+  isCompleted Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectMessage {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model ProjectImage {
+  id         String   @id @default(cuid())
+  projectId  String
+  fileName   String
+  filePath   String
+  imageType  String
+  uploadedAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ==================== ДИЗАЙНЕР ====================
+
+model Mockup {
+  id             String    @id @default(cuid())
+  number         Int       @default(autoincrement())
+  month          String
+  startDate      DateTime
+  installDate    DateTime?
+  daysToComplete Int?
+  status         String    @default("drawing")
+  complexity     Int?
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  designerId String
+  designer   User   @relation("DesignerMockups", fields: [designerId], references: [id])
+
+  images MockupImageFile[]
+}
+
+model MockupImageFile {
+  id         String   @id @default(cuid())
+  mockupId   String
+  fileName   String
+  filePath   String
+  zone       String
+  uploadedAt DateTime @default(now())
+
+  mockup Mockup @relation(fields: [mockupId], references: [id], onDelete: Cascade)
+}
+
+// ==================== СКЛАД: ИНВЕНТАРЬ ====================
+
+model InventoryCategory {
+  id        String  @id @default(cuid())
+  name      String
+  parentId  String?
+  sortOrder Int     @default(0)
+
+  parent   InventoryCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children InventoryCategory[] @relation("CategoryTree")
+  items    InventoryItem[]
+}
+
+model InventoryItem {
+  id         String   @id @default(cuid())
+  categoryId String
+  name       String
+  color      String?
+  quantity   Int      @default(0)
+  photoUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category InventoryCategory @relation(fields: [categoryId], references: [id])
+  damages  InventoryDamage[]
+}
+
+model InventoryDamage {
+  id          String   @id @default(cuid())
+  itemId      String
+  quantity    Int
+  description String?
+  date        DateTime @default(now())
+
+  item InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+// ==================== СКЛАД: ТКАНИ ====================
+
+model Fabric {
+  id          String   @id @default(cuid())
+  material    String
+  color       String
+  width       Int?
+  cuts        String?
+  quantity    Int?
+  totalLength Decimal?
+  yearBought  String?
+  supplier    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== ИНФО: ПЕРСОНАЛ ====================
+
+enum StaffSection {
+  CORE_TEAM
+  FREELANCE_MALE
+  FREELANCE_FEMALE
+  DRIVERS
+}
+
+model Staff {
+  id           String       @id @default(cuid())
+  section      StaffSection
+  fullName     String
+  position     String
+  passport     String?
+  birthDate    DateTime?
+  age          Int?
+  startDate    String?
+  address      String?
+  phone        String?
+  hasVehicle   String?
+  telegramLink String?
+  notes        String?
+}
+
+// ==================== ИНФО: ПОДРЯДЧИКИ ====================
+
+model Contractor {
+  id           String  @id @default(cuid())
+  category     String
+  companyName  String
+  address      String?
+  phone        String?
+  notes        String?
+  telegramLink String?
+  recordedBy   String?
+}
+
+// ==================== МЕНЕДЖЕР: ЗАДАЧИ И РАСХОДЫ ====================
+
+model ManagerTask {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  dueDate     DateTime?
+  isCompleted Boolean   @default(false)
+  imageUrl    String?
+  assignedBy  String?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  userId      String
+  category    String
+  projectId   String?
+  description String
+  amount      Decimal
+  date        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ==================== ПОЧТА ====================
+
+model MailEntry {
+  id         String   @id @default(cuid())
+  fromEmail  String
+  subject    String
+  body       String
+  isRead     Boolean  @default(false)
+  receivedAt DateTime @default(now())
+  assignedTo String?
+}
+
+// ==================== СООБЩЕНИЯ (ЧАТ) ====================
+
+model Message {
+  id        String   @id @default(cuid())
+  userId    String
+  text      String
+  fileUrl   String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ==================== ИСТОРИЯ ====================
+
+model HistoryEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ==================== УВЕДОМЛЕНИЯ ====================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
