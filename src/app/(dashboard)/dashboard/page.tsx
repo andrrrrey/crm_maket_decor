@@ -1,10 +1,14 @@
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { Role } from "@/types";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const user = session?.user as any;
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+  const user = session.user as any;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
