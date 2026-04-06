@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { shouldFilterByManager } from "@/lib/permissions";
 import { ClientsTable } from "@/components/tables/ClientsTable";
+import { ManagerFilter } from "@/components/filters/ManagerFilter";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { ClientWithManager } from "@/types";
@@ -84,28 +85,10 @@ export default async function ClientsPage({
         </Link>
 
         {user.role === "DIRECTOR" && managers.length > 0 && (
-          <div className="ml-4">
-            <select
-              className="px-3 py-1.5 text-sm border rounded-md bg-background"
-              defaultValue={searchParams.managerId ?? ""}
-              onChange={(e) => {
-                const url = new URL(window.location.href);
-                if (e.target.value) {
-                  url.searchParams.set("managerId", e.target.value);
-                } else {
-                  url.searchParams.delete("managerId");
-                }
-                window.location.href = url.toString();
-              }}
-            >
-              <option value="">Все менеджеры</option>
-              {managers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ManagerFilter
+            managers={managers}
+            currentManagerId={searchParams.managerId}
+          />
         )}
       </div>
 
