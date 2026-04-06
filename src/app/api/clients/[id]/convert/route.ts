@@ -18,7 +18,7 @@ export async function POST(
 
   const client = await prisma.client.findUnique({
     where: { id: params.id },
-    include: { estimates: true },
+    include: { estimates: true, contract: true },
   });
 
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
