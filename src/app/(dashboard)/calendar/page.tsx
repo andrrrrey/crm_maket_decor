@@ -61,7 +61,7 @@ export default async function CalendarPage({
       {/* Легенда */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-pink-400" />
+          <div className="w-3 h-3 rounded-full bg-orange-400" />
           Монтаж
         </div>
         <div className="flex items-center gap-1.5">

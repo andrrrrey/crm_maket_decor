@@ -10,7 +10,7 @@ const createProjectSchema = z.object({
   date: z.string(),
   venue: z.string().optional(),
   description: z.string().optional(),
-  calendarColor: z.string().default("#F472B6"),
+  calendarColor: z.string().default("#FB923C"),
   contractId: z.string().optional(),
 });
 

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Flower2 } from "lucide-react";
 
 const loginSchema = z.object({
   login: z.string().min(1, "Введите логин"),
@@ -56,13 +57,13 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+        <div className="glass-card p-8">
           {/* Логотип/заголовок */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-100 dark:bg-pink-900 mb-4">
-              <span className="text-2xl">🌸</span>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
+              <Flower2 className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Maket Decor
@@ -86,7 +87,7 @@ function LoginForm() {
                 type="text"
                 autoComplete="username"
                 {...register("login")}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-400 focus:border-transparent outline-none transition"
+                className="w-full px-3 py-2 border border-white/30 dark:border-white/10 rounded-lg bg-white/50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:border-transparent outline-none transition backdrop-blur-sm"
                 placeholder="Введите логин"
               />
               {errors.login && (
@@ -108,7 +109,7 @@ function LoginForm() {
                 type="password"
                 autoComplete="current-password"
                 {...register("password")}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-400 focus:border-transparent outline-none transition"
+                className="w-full px-3 py-2 border border-white/30 dark:border-white/10 rounded-lg bg-white/50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:border-transparent outline-none transition backdrop-blur-sm"
                 placeholder="Введите пароль"
               />
               {errors.password && (
@@ -119,7 +120,7 @@ function LoginForm() {
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <div className="p-3 rounded-lg bg-red-50/80 dark:bg-red-900/20 border border-red-200/50 dark:border-red-800/50">
                 <p className="text-sm text-red-600 dark:text-red-400">
                   {error}
                 </p>
@@ -129,7 +130,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-pink-500 hover:bg-pink-600 disabled:bg-pink-300 text-white font-medium rounded-lg transition duration-200 focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 outline-none"
+              className="w-full py-2.5 px-4 bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-primary-foreground font-medium rounded-lg transition duration-200 focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 outline-none"
             >
               {loading ? "Входим..." : "Войти"}
             </button>

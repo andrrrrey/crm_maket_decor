@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 20% 97%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -23,7 +23,7 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -37,6 +37,18 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Glass effect variables */
+    --glass-bg: 255 255 255;
+    --glass-opacity: 0.72;
+    --glass-blur: 18px;
+    --glass-border: 255 255 255;
+    --glass-border-opacity: 0.35;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+
+    /* Wallpaper */
+    --wallpaper: url('');
+    --wallpaper-overlay: linear-gradient(135deg, rgba(230, 240, 255, 0.5), rgba(220, 230, 250, 0.3));
   }
 
   .dark {
@@ -72,6 +84,18 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Glass effect variables - dark */
+    --glass-bg: 15 23 42;
+    --glass-opacity: 0.65;
+    --glass-blur: 18px;
+    --glass-border: 255 255 255;
+    --glass-border-opacity: 0.08;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    /* Wallpaper - dark */
+    --wallpaper: url('');
+    --wallpaper-overlay: linear-gradient(135deg, rgba(10, 15, 30, 0.7), rgba(15, 20, 40, 0.5));
   }
 }
 
@@ -81,5 +105,58 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(var(--glass-bg) / var(--glass-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid rgba(var(--glass-border) / var(--glass-border-opacity));
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-subtle {
+    background: rgba(var(--glass-bg) / calc(var(--glass-opacity) - 0.15));
+    backdrop-filter: blur(calc(var(--glass-blur) - 4px));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) - 4px));
+    border: 1px solid rgba(var(--glass-border) / calc(var(--glass-border-opacity) - 0.1));
+  }
+
+  .glass-card {
+    background: rgba(var(--glass-bg) / calc(var(--glass-opacity) + 0.08));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid rgba(var(--glass-border) / var(--glass-border-opacity));
+    box-shadow: var(--glass-shadow);
+    border-radius: var(--radius);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .wallpaper-bg {
+    background-image: var(--wallpaper);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  .wallpaper-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--wallpaper-overlay);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wallpaper-bg > * {
+    position: relative;
+    z-index: 1;
   }
 }

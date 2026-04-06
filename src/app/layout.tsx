@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { SessionProviderWrapper } from "@/components/layout/SessionProviderWrapper";
+import { WallpaperProvider } from "@/hooks/useWallpaper";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
@@ -26,7 +27,9 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
-            {children}
+            <WallpaperProvider>
+              {children}
+            </WallpaperProvider>
           </ThemeProvider>
         </SessionProviderWrapper>
       </body>

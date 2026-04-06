@@ -25,6 +25,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Flower2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -62,20 +63,24 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "flex flex-col h-screen glass transition-all duration-300",
         collapsed ? "w-16" : "w-56"
       )}
     >
       {/* Логотип */}
-      <div className="flex items-center h-14 px-3 border-b border-sidebar-border">
+      <div className="flex items-center h-14 px-3 border-b border-white/10 dark:border-white/5">
         {!collapsed && (
-          <span className="font-bold text-sidebar-foreground text-sm truncate flex-1">
-            🌸 Maket Decor
+          <span className="font-bold text-sidebar-foreground text-sm truncate flex-1 flex items-center gap-2">
+            <Flower2 className="h-5 w-5 text-primary shrink-0" />
+            Maket Decor
           </span>
+        )}
+        {collapsed && (
+          <Flower2 className="h-5 w-5 text-primary mx-auto" />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground ml-auto"
+          className="p-1.5 rounded-md hover:bg-white/10 dark:hover:bg-white/5 text-sidebar-foreground ml-auto"
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -98,10 +103,10 @@ export function Sidebar() {
               key={item.key}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-2.5 py-2 rounded-md text-sm transition-colors",
+                "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm transition-all",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-foreground font-medium"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  ? "bg-primary/15 text-primary font-medium shadow-sm"
+                  : "text-sidebar-foreground/70 hover:bg-white/10 dark:hover:bg-white/5 hover:text-sidebar-foreground"
               )}
               title={collapsed ? item.label : undefined}
             >
@@ -114,7 +119,7 @@ export function Sidebar() {
 
       {/* Пользователь */}
       {!collapsed && user && (
-        <div className="p-3 border-t border-sidebar-border">
+        <div className="p-3 border-t border-white/10 dark:border-white/5">
           <div className="text-xs text-sidebar-foreground/60 truncate">
             {user.name}
           </div>
