@@ -36,8 +36,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma files
+# Copy Prisma files and seed dependencies
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./package.json
 
 # Copy all node_modules (needed for server.js/worker.js runtime deps
 # like socket.io, ioredis, bullmq, nodemailer, imap, mailparser etc.
