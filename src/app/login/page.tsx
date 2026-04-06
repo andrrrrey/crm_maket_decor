@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -12,9 +12,17 @@ const loginSchema = z.object({
   password: z.string().min(1, "Введите пароль"),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -25,9 +33,9 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     setError(null);
 
