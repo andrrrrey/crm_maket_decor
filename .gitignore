@@ -32,7 +32,7 @@ yarn-error.log*
 *.swo
 
 # Prisma
-prisma/migrations/
+# prisma/migrations/ — migrations should be committed
 
 # IDE
 .vscode/
