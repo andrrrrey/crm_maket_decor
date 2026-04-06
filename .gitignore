@@ -21,6 +21,9 @@ build/
 data/
 uploads/
 
+# TypeScript
+tsconfig.tsbuildinfo
+
 # Debug logs
 npm-debug.log*
 yarn-debug.log*

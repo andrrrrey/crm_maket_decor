@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
-  const isLoggedIn = !!session;
+  // Проверяем наличие реальных данных пользователя, а не только наличие объекта сессии
+  const isLoggedIn = !!session?.user?.email;
 
   const isAuthRoute = nextUrl.pathname.startsWith("/login");
   const isDashboardRoute =

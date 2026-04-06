@@ -49,6 +49,10 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    authorized({ auth: session }) {
+      // Проверяем наличие реальных данных пользователя, а не просто наличие сессии
+      return !!session?.user?.email;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
