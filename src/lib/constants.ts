@@ -59,7 +59,7 @@ export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
 // ==================== ЦВЕТА КАЛЕНДАРЯ ====================
 
 export const CALENDAR_COLORS = [
-  { value: "#F472B6", label: "Розовый (монтаж)" },
+  { value: "#FB923C", label: "Оранжевый (монтаж)" },
   { value: "#60A5FA", label: "Синий (демонтаж)" },
   { value: "#34D399", label: "Зелёный (бронь)" },
   { value: "#FBBF24", label: "Жёлтый" },

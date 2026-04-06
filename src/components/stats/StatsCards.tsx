@@ -41,8 +41,8 @@ export function StatsCards({
       label: "Конверсия",
       value: `${conversionRate}%`,
       icon: TrendingUp,
-      color: "text-pink-500",
-      bg: "bg-pink-50 dark:bg-pink-900/20",
+      color: "text-amber-500",
+      bg: "bg-amber-50 dark:bg-amber-900/20",
     },
   ];
 
