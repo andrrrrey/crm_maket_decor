@@ -1,6 +1,6 @@
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -19,10 +19,12 @@ RUN npm run build
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PRISMA_ENGINES_MIRROR=skip
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -40,7 +42,7 @@ COPY --from=builder /app/prisma ./prisma
 # Copy all node_modules (needed for server.js/worker.js runtime deps
 # like socket.io, ioredis, bullmq, nodemailer, imap, mailparser etc.
 # which are not included in Next.js standalone output)
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Copy server and worker
 COPY --from=builder /app/server.js ./server.js
