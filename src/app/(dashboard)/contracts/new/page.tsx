@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,38 +8,88 @@ import { z } from "zod";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+const optionalNumber = z.preprocess(
+  (val) => (val === "" || val === null || val === undefined ? undefined : val),
+  z.coerce.number().nonnegative("Сумма не может быть отрицательной").optional()
+);
+
 const schema = z.object({
-  number: z.string().min(1, "Обязательное поле"),
+  dateSignedAt: z.string().min(1, "Обязательное поле"),
+  installDate: z.string().min(1, "Обязательное поле"),
   clientName: z.string().min(1, "Обязательное поле"),
-  clientPhone: z.string().optional(),
-  clientEmail: z.string().email("Неверный email").optional().or(z.literal("")),
-  eventDate: z.string().optional(),
-  eventType: z.string().optional(),
   venue: z.string().optional(),
-  totalAmount: z.coerce.number().positive("Введите сумму").optional(),
-  prepayment: z.coerce.number().min(0).optional(),
+  totalAmount: optionalNumber,
+  prepaymentDate: z.string().optional(),
+  prepaymentAmount: optionalNumber,
+  invoiceNumber: z.string().optional(),
+  orgAmount: optionalNumber,
   notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
 
+function todayISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function NewContractPage() {
   const router = useRouter();
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      dateSignedAt: todayISO(),
+    },
+  });
 
   const onSubmit = async (data: FormData) => {
-    const res = await fetch("/api/contracts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      router.push(`/contracts/${json.data.id}`);
+    setSubmitError(null);
+
+    // Удалить пустые/неопределённые поля, чтобы API получил только заполненные
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && value !== "") {
+        payload[key] = value;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        router.push(`/contracts/${json.data.id}`);
+        return;
+      }
+
+      const errJson = await res.json().catch(() => null);
+      if (res.status === 401) {
+        setSubmitError("Сессия истекла. Войдите снова.");
+      } else if (res.status === 403) {
+        setSubmitError("Недостаточно прав для создания договора.");
+      } else if (errJson?.error) {
+        setSubmitError(
+          typeof errJson.error === "string"
+            ? errJson.error
+            : "Проверьте корректность заполненных полей."
+        );
+      } else {
+        setSubmitError(`Ошибка сервера (${res.status}).`);
+      }
+    } catch (e) {
+      setSubmitError("Сетевая ошибка. Попробуйте ещё раз.");
     }
   };
 
@@ -58,16 +109,29 @@ export default function NewContractPage() {
         <div className="p-4 rounded-lg border bg-card space-y-4">
           <h2 className="text-sm font-semibold">Договор</h2>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Номер договора *</label>
-            <input
-              {...register("number")}
-              className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-              placeholder="2024-001"
-            />
-            {errors.number && (
-              <p className="text-xs text-destructive">{errors.number.message}</p>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Дата заключения *</label>
+              <input
+                type="date"
+                {...register("dateSignedAt")}
+                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+              />
+              {errors.dateSignedAt && (
+                <p className="text-xs text-destructive">{errors.dateSignedAt.message}</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Дата монтажа *</label>
+              <input
+                type="date"
+                {...register("installDate")}
+                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+              />
+              {errors.installDate && (
+                <p className="text-xs text-destructive">{errors.installDate.message}</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -75,7 +139,7 @@ export default function NewContractPage() {
           <h2 className="text-sm font-semibold">Клиент</h2>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">Имя *</label>
+            <label className="text-sm font-medium">Имя клиента *</label>
             <input
               {...register("clientName")}
               className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
@@ -84,51 +148,6 @@ export default function NewContractPage() {
             {errors.clientName && (
               <p className="text-xs text-destructive">{errors.clientName.message}</p>
             )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Телефон</label>
-              <input
-                {...register("clientPhone")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="+7 (999) 000-00-00"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Email</label>
-              <input
-                {...register("clientEmail")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="client@example.com"
-              />
-              {errors.clientEmail && (
-                <p className="text-xs text-destructive">{errors.clientEmail.message}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-lg border bg-card space-y-4">
-          <h2 className="text-sm font-semibold">Мероприятие</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Дата</label>
-              <input
-                type="date"
-                {...register("eventDate")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Тип</label>
-              <input
-                {...register("eventType")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="Свадьба, Корпоратив..."
-              />
-            </div>
           </div>
 
           <div className="space-y-1">
@@ -146,9 +165,10 @@ export default function NewContractPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Сумма (₽)</label>
+              <label className="text-sm font-medium">Общая сумма (₽)</label>
               <input
                 type="number"
+                step="0.01"
                 {...register("totalAmount")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
                 placeholder="150000"
@@ -158,14 +178,51 @@ export default function NewContractPage() {
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Предоплата (₽)</label>
+              <label className="text-sm font-medium">Сумма организатору (₽)</label>
               <input
                 type="number"
-                {...register("prepayment")}
+                step="0.01"
+                {...register("orgAmount")}
+                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+                placeholder="0"
+              />
+              {errors.orgAmount && (
+                <p className="text-xs text-destructive">{errors.orgAmount.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Сумма предоплаты (₽)</label>
+              <input
+                type="number"
+                step="0.01"
+                {...register("prepaymentAmount")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
                 placeholder="50000"
               />
+              {errors.prepaymentAmount && (
+                <p className="text-xs text-destructive">{errors.prepaymentAmount.message}</p>
+              )}
             </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Дата предоплаты</label>
+              <input
+                {...register("prepaymentDate")}
+                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+                placeholder="Например: 01.04.2026"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Номер счёта</label>
+            <input
+              {...register("invoiceNumber")}
+              className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+              placeholder="2024-001"
+            />
           </div>
         </div>
 
@@ -178,6 +235,12 @@ export default function NewContractPage() {
             placeholder="Дополнительная информация..."
           />
         </div>
+
+        {submitError && (
+          <div className="p-3 rounded-md border border-destructive/50 bg-destructive/10 text-sm text-destructive">
+            {submitError}
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button
