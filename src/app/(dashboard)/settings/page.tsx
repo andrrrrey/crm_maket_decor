@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { OpenMonthsSettings } from "./OpenMonthsSettings";
 import { UserBadge } from "./UserBadge";
+import { NewUserForm } from "./NewUserForm";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -58,8 +59,11 @@ export default async function SettingsPage() {
       {isDirector && (
         <div className="p-4 rounded-lg border bg-card space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Пользователи</h2>
-            <span className="text-xs text-muted-foreground">{users.length}</span>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold">Пользователи</h2>
+              <span className="text-xs text-muted-foreground">{users.length}</span>
+            </div>
+            <NewUserForm />
           </div>
           <div className="divide-y">
             {users.map((u) => (

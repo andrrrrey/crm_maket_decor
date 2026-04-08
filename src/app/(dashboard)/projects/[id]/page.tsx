@@ -5,9 +5,11 @@ import { shouldFilterByManager } from "@/lib/permissions";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { ProjectTaskList } from "./ProjectTaskList";
 import { ProjectChat } from "./ProjectChat";
+import { ProjectEditButton } from "./ProjectEditButton";
+import type { Role } from "@/types";
 
 export default async function ProjectPage({
   params,
@@ -46,6 +48,29 @@ export default async function ProjectPage({
     user.role === "MANAGER" ||
     user.role === "PRODUCTION";
 
+  // Форма редактирования доступна только директору и менеджеру
+  const canEditProject = user.role === "DIRECTOR" || user.role === "MANAGER";
+
+  const [managers, availableContracts] = canEditProject
+    ? await Promise.all([
+        prisma.user.findMany({
+          where: { isActive: true, role: { in: ["DIRECTOR", "MANAGER"] } },
+          select: { id: true, name: true, role: true },
+          orderBy: { name: "asc" },
+        }),
+        prisma.contract.findMany({
+          where: {
+            OR: [
+              { project: null },
+              ...(project.contractId ? [{ id: project.contractId }] : []),
+            ],
+          },
+          select: { id: true, contractNumber: true, clientName: true },
+          orderBy: { createdAt: "desc" },
+        }),
+      ])
+    : [[], []];
+
   const completedTasks = project.tasks.filter((t) => t.isCompleted).length;
 
   return (
@@ -76,6 +101,23 @@ export default async function ProjectPage({
             {project.manager.name}
           </p>
         </div>
+        {canEditProject && (
+          <ProjectEditButton
+            project={{
+              id: project.id,
+              venue: project.venue,
+              date: project.date,
+              description: project.description,
+              calendarColor: project.calendarColor,
+              isCompleted: project.isCompleted,
+              managerId: project.managerId,
+              contractId: project.contractId,
+            }}
+            managers={managers as { id: string; name: string; role: Role }[]}
+            availableContracts={availableContracts}
+            currentUserRole={user.role as Role}
+          />
+        )}
       </div>
 
       {/* Связь с договором */}

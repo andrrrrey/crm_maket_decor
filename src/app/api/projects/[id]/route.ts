@@ -12,6 +12,8 @@ const updateSchema = z.object({
   description: z.string().optional(),
   calendarColor: z.string().optional(),
   isCompleted: z.boolean().optional(),
+  managerId: z.string().optional(),
+  contractId: z.string().nullable().optional(),
 });
 
 export async function GET(
@@ -77,6 +79,25 @@ export async function PUT(
   const date = data.date ? new Date(data.date) : undefined;
   const month = date ? format(date, "yyyy-MM") : undefined;
 
+  // Менеджера может менять только DIRECTOR
+  if (data.managerId && data.managerId !== existing.managerId && user.role !== "DIRECTOR") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Проверка: если привязываем договор, он должен быть свободен (либо уже привязан к этому проекту)
+  if (data.contractId) {
+    const contractOwner = await prisma.project.findUnique({
+      where: { contractId: data.contractId },
+      select: { id: true },
+    });
+    if (contractOwner && contractOwner.id !== params.id) {
+      return NextResponse.json(
+        { error: "Договор уже привязан к другому проекту" },
+        { status: 409 }
+      );
+    }
+  }
+
   const updated = await prisma.project.update({
     where: { id: params.id },
     data: {
@@ -85,6 +106,8 @@ export async function PUT(
       ...(data.description !== undefined && { description: data.description }),
       ...(data.calendarColor && { calendarColor: data.calendarColor }),
       ...(data.isCompleted !== undefined && { isCompleted: data.isCompleted }),
+      ...(data.managerId && { managerId: data.managerId }),
+      ...(data.contractId !== undefined && { contractId: data.contractId }),
     },
   });
 
