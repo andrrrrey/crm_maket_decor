@@ -1,43 +1,92 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { PROJECT_TYPE_LABELS } from "@/lib/constants";
+
+const PROJECT_TYPES = ["WEDDING", "CORPORATE", "BIRTHDAY", "OTHER"] as const;
 
 const schema = z.object({
-  name: z.string().min(1, "Обязательное поле"),
-  phone: z.string().optional(),
-  email: z.string().email("Неверный email").optional().or(z.literal("")),
-  eventDate: z.string().optional(),
-  eventType: z.string().optional(),
+  dateReceived: z.string().min(1, "Обязательное поле"),
+  clientName: z.string().min(1, "Обязательное поле"),
+  projectType: z.enum(PROJECT_TYPES).default("WEDDING"),
+  meetingDate: z.string().optional(),
+  projectDate: z.string().optional(),
   venue: z.string().optional(),
-  guestCount: z.coerce.number().int().positive().optional(),
-  budget: z.coerce.number().positive().optional(),
-  notes: z.string().optional(),
+  source: z.string().optional(),
+  projectIdea: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
 
+function todayISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function NewClientPage() {
   const router = useRouter();
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      dateReceived: todayISO(),
+      projectType: "WEDDING",
+    },
+  });
 
   const onSubmit = async (data: FormData) => {
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      router.push(`/clients/${json.data.id}`);
+    setSubmitError(null);
+
+    // Удалить пустые строки, чтобы API не получал "" для опциональных полей
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && value !== "") {
+        payload[key] = value;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        router.push(`/clients/${json.data.id}`);
+        return;
+      }
+
+      const errJson = await res.json().catch(() => null);
+      if (res.status === 401) {
+        setSubmitError("Сессия истекла. Войдите снова.");
+      } else if (res.status === 403) {
+        setSubmitError("Недостаточно прав для создания клиента.");
+      } else if (errJson?.error) {
+        setSubmitError(
+          typeof errJson.error === "string"
+            ? errJson.error
+            : "Проверьте корректность заполненных полей."
+        );
+      } else {
+        setSubmitError(`Ошибка сервера (${res.status}).`);
+      }
+    } catch (e) {
+      setSubmitError("Сетевая ошибка. Попробуйте ещё раз.");
     }
   };
 
@@ -58,37 +107,51 @@ export default function NewClientPage() {
           <h2 className="text-sm font-semibold">Основная информация</h2>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">Имя *</label>
+            <label className="text-sm font-medium">Имя клиента *</label>
             <input
-              {...register("name")}
+              {...register("clientName")}
               className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
               placeholder="Введите имя клиента"
             />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name.message}</p>
+            {errors.clientName && (
+              <p className="text-xs text-destructive">{errors.clientName.message}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Телефон</label>
+              <label className="text-sm font-medium">Дата обращения *</label>
               <input
-                {...register("phone")}
+                type="date"
+                {...register("dateReceived")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="+7 (999) 000-00-00"
               />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Email</label>
-              <input
-                {...register("email")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="client@example.com"
-              />
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
+              {errors.dateReceived && (
+                <p className="text-xs text-destructive">{errors.dateReceived.message}</p>
               )}
             </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Тип проекта</label>
+              <select
+                {...register("projectType")}
+                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+              >
+                {PROJECT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {PROJECT_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Источник</label>
+            <input
+              {...register("source")}
+              className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+              placeholder="Instagram, рекомендация, сайт..."
+            />
           </div>
         </div>
 
@@ -97,19 +160,19 @@ export default function NewClientPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Дата мероприятия</label>
+              <label className="text-sm font-medium">Дата встречи</label>
               <input
-                type="date"
-                {...register("eventDate")}
+                {...register("meetingDate")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+                placeholder="Например: 15 марта, 18:00"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Тип мероприятия</label>
+              <label className="text-sm font-medium">Дата мероприятия</label>
               <input
-                {...register("eventType")}
+                type="date"
+                {...register("projectDate")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="Свадьба, Корпоратив..."
               />
             </div>
           </div>
@@ -122,38 +185,23 @@ export default function NewClientPage() {
               placeholder="Название и адрес площадки"
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Кол-во гостей</label>
-              <input
-                type="number"
-                {...register("guestCount")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="100"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Бюджет (₽)</label>
-              <input
-                type="number"
-                {...register("budget")}
-                className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="100000"
-              />
-            </div>
-          </div>
         </div>
 
         <div className="p-4 rounded-lg border bg-card space-y-2">
-          <label className="text-sm font-semibold">Примечания</label>
+          <label className="text-sm font-semibold">Идея проекта</label>
           <textarea
-            {...register("notes")}
+            {...register("projectIdea")}
             rows={3}
             className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none resize-none"
-            placeholder="Дополнительная информация..."
+            placeholder="Описание идеи, пожелания клиента..."
           />
         </div>
+
+        {submitError && (
+          <div className="p-3 rounded-md border border-destructive/50 bg-destructive/10 text-sm text-destructive">
+            {submitError}
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button
