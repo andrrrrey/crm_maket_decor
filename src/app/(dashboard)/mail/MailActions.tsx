@@ -7,13 +7,11 @@ export function MailActions({
   entryId,
   isRead,
   fromEmail,
-  fromName,
   subject,
 }: {
   entryId: string;
   isRead: boolean;
   fromEmail: string;
-  fromName: string | null;
   subject: string;
 }) {
   const router = useRouter();
@@ -31,8 +29,10 @@ export function MailActions({
     const params = new URLSearchParams();
     params.set("from", "mail");
     params.set("mailId", entryId);
-    if (fromName) params.set("clientName", fromName);
-    if (fromEmail) params.set("email", fromEmail);
+    if (fromEmail) {
+      params.set("email", fromEmail);
+      params.set("clientName", fromEmail.split("@")[0]);
+    }
     if (subject) params.set("projectIdea", subject);
     router.push(`/clients/new?${params.toString()}`);
   };

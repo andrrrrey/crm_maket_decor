@@ -73,7 +73,6 @@ export default async function MailPage() {
                 entryId={entry.id}
                 isRead={entry.isRead}
                 fromEmail={entry.fromEmail}
-                fromName={entry.fromName}
                 subject={entry.subject}
               />
             </div>
