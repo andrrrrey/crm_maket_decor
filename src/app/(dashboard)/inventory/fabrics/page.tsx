@@ -2,8 +2,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { AddFabricButton, EditFabricButton } from "./FabricActions";
 
 export default async function FabricsPage() {
+  const session = await auth();
+  const user = session?.user as any;
+  const canEdit = user.role === "DIRECTOR" || user.role === "PRODUCTION";
+
   const fabrics = await prisma.fabric.findMany({
     orderBy: [{ material: "asc" }, { color: "asc" }],
   });
@@ -22,6 +27,11 @@ export default async function FabricsPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="text-2xl font-bold">Ткани</h1>
+        {canEdit && (
+          <div className="ml-auto">
+            <AddFabricButton />
+          </div>
+        )}
       </div>
 
       {Object.keys(byMaterial).length === 0 ? (
@@ -32,25 +42,42 @@ export default async function FabricsPage() {
             <div className="p-3 bg-muted/30 font-medium text-sm">{material}</div>
             <div className="divide-y">
               {items.map((fabric) => (
-                <div key={fabric.id} className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                  <div>
-                    <span className="font-medium">{fabric.color}</span>
-                    {fabric.width && (
-                      <span className="text-muted-foreground"> · {fabric.width}см</span>
+                <div key={fabric.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2 flex-1">
+                    <div>
+                      <span className="font-medium">{fabric.color}</span>
+                      {fabric.width && (
+                        <span className="text-muted-foreground"> · {fabric.width}см</span>
+                      )}
+                    </div>
+                    {fabric.cuts && (
+                      <div className="text-muted-foreground truncate">{fabric.cuts}</div>
+                    )}
+                    {fabric.totalLength && (
+                      <div>
+                        <span className="font-mono">{Number(fabric.totalLength)} м</span>
+                      </div>
+                    )}
+                    {(fabric.supplier || fabric.yearBought) && (
+                      <div className="text-muted-foreground text-xs">
+                        {fabric.supplier} {fabric.yearBought && `(${fabric.yearBought})`}
+                      </div>
                     )}
                   </div>
-                  {fabric.cuts && (
-                    <div className="text-muted-foreground truncate">{fabric.cuts}</div>
-                  )}
-                  {fabric.totalLength && (
-                    <div>
-                      <span className="font-mono">{Number(fabric.totalLength)} м</span>
-                    </div>
-                  )}
-                  {(fabric.supplier || fabric.yearBought) && (
-                    <div className="text-muted-foreground text-xs">
-                      {fabric.supplier} {fabric.yearBought && `(${fabric.yearBought})`}
-                    </div>
+                  {canEdit && (
+                    <EditFabricButton
+                      fabric={{
+                        id: fabric.id,
+                        material: fabric.material,
+                        color: fabric.color,
+                        width: fabric.width,
+                        cuts: fabric.cuts,
+                        totalLength: fabric.totalLength,
+                        yearBought: fabric.yearBought,
+                        supplier: fabric.supplier,
+                        notes: fabric.notes,
+                      }}
+                    />
                   )}
                 </div>
               ))}

@@ -50,9 +50,10 @@ export default async function DesignerPage({
           <p className="text-muted-foreground col-span-3">Макетов нет</p>
         ) : (
           mockups.map((mockup) => (
-            <div
+            <Link
+              href={`/designer/${mockup.id}`}
               key={mockup.id}
-              className="p-4 rounded-lg border bg-card space-y-2"
+              className="p-4 rounded-lg border bg-card space-y-2 hover:border-primary/50 transition-colors block"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
@@ -116,7 +117,7 @@ export default async function DesignerPage({
               <p className="text-xs text-muted-foreground">
                 {mockup.designer.name} · {mockup.month}
               </p>
-            </div>
+            </Link>
           ))
         )}
       </div>

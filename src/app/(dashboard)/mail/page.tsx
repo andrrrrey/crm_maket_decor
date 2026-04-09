@@ -69,7 +69,13 @@ export default async function MailPage() {
                   {entry.body}
                 </p>
               </div>
-              <MailActions entryId={entry.id} isRead={entry.isRead} />
+              <MailActions
+                entryId={entry.id}
+                isRead={entry.isRead}
+                fromEmail={entry.fromEmail}
+                fromName={entry.fromName}
+                subject={entry.subject}
+              />
             </div>
           ))
         )}

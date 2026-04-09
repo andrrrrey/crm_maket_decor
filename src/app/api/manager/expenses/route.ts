@@ -56,3 +56,24 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ data: expense }, { status: 201 });
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = session.user as any;
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const expense = await prisma.expense.findUnique({ where: { id } });
+  if (!expense) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (expense.userId !== user.id && user.role !== "DIRECTOR") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await prisma.expense.delete({ where: { id } });
+  return NextResponse.json({ message: "Deleted" });
+}

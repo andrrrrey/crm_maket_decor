@@ -3,11 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { shouldFilterByManager } from "@/lib/permissions";
 import { MockupStatusBadge } from "@/components/shared/StatusBadge";
-import { FileList } from "@/components/files/FileList";
+import { FileListWithDelete } from "@/components/files/FileListWithDelete";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import { MockupStatusSelect, ContractEditForm, ContractFileUpload } from "./ContractEditForm";
+import type { ContractMockupStatus } from "@/types";
 
 export default async function ContractPage({
   params,
@@ -59,12 +61,51 @@ export default async function ContractPage({
             <h1 className="text-2xl font-bold">
               Договор №{contract.contractNumber}
             </h1>
-            <MockupStatusBadge status={contract.mockupStatus} />
+            {canEdit ? (
+              <MockupStatusSelect
+                contract={{
+                  id: contract.id,
+                  mockupStatus: contract.mockupStatus as ContractMockupStatus,
+                  clientName: contract.clientName,
+                  venue: contract.venue,
+                  totalAmount: contract.totalAmount?.toString() ?? null,
+                  prepaymentDate: contract.prepaymentDate,
+                  prepaymentAmount: contract.prepaymentAmount?.toString() ?? null,
+                  invoiceNumber: contract.invoiceNumber,
+                  orgAmount: contract.orgAmount?.toString() ?? null,
+                  notes: contract.notes,
+                  dateSignedAt: contract.dateSignedAt.toISOString(),
+                  installDate: contract.installDate.toISOString(),
+                }}
+              />
+            ) : (
+              <MockupStatusBadge status={contract.mockupStatus} />
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
             {contract.clientName} · Менеджер: {contract.manager.name}
           </p>
         </div>
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <ContractEditForm
+              contract={{
+                id: contract.id,
+                mockupStatus: contract.mockupStatus as ContractMockupStatus,
+                clientName: contract.clientName,
+                venue: contract.venue,
+                totalAmount: contract.totalAmount?.toString() ?? null,
+                prepaymentDate: contract.prepaymentDate,
+                prepaymentAmount: contract.prepaymentAmount?.toString() ?? null,
+                invoiceNumber: contract.invoiceNumber,
+                orgAmount: contract.orgAmount?.toString() ?? null,
+                notes: contract.notes,
+                dateSignedAt: contract.dateSignedAt.toISOString(),
+                installDate: contract.installDate.toISOString(),
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Связи */}
@@ -156,26 +197,35 @@ export default async function ContractPage({
         )}
       </div>
 
+      {/* Загрузка файлов */}
+      {canEdit && (
+        <div className="flex gap-2">
+          <ContractFileUpload contractId={contract.id} />
+        </div>
+      )}
+
       {/* Файлы */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Сметы</h2>
-          <FileList
+          <FileListWithDelete
             files={contract.estimates.map((f) => ({
               ...f,
               uploadedAt: f.uploadedAt.toISOString(),
             }))}
             canDelete={canEdit}
+            deleteUrl={`/api/contracts/${contract.id}/files`}
           />
         </div>
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Файлы договора</h2>
-          <FileList
+          <FileListWithDelete
             files={contractFiles.map((f) => ({
               ...f,
               uploadedAt: f.uploadedAt.toISOString(),
             }))}
             canDelete={canEdit}
+            deleteUrl={`/api/contracts/${contract.id}/files`}
           />
         </div>
       </div>
@@ -183,12 +233,13 @@ export default async function ContractPage({
       {invoiceFiles.length > 0 && (
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Счета</h2>
-          <FileList
+          <FileListWithDelete
             files={invoiceFiles.map((f) => ({
               ...f,
               uploadedAt: f.uploadedAt.toISOString(),
             }))}
             canDelete={canEdit}
+            deleteUrl={`/api/contracts/${contract.id}/files`}
           />
         </div>
       )}

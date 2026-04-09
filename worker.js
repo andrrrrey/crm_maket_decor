@@ -107,10 +107,10 @@ const mailCheckWorker = new Worker(
               return;
             }
 
-            const fetch = imap.fetch(results, { bodies: "" });
+            const imapFetch = imap.fetch(results, { bodies: "" });
             const messages = [];
 
-            fetch.on("message", (msg) => {
+            imapFetch.on("message", (msg) => {
               let buffer = "";
               msg.on("body", (stream) => {
                 stream.on("data", (chunk) => (buffer += chunk.toString("utf8")));
@@ -118,7 +118,7 @@ const mailCheckWorker = new Worker(
               });
             });
 
-            fetch.once("end", async () => {
+            imapFetch.once("end", async () => {
               for (const raw of messages) {
                 try {
                   const parsed = await simpleParser(raw);
@@ -176,6 +176,20 @@ notificationWorker.on("failed", (job, err) => {
 
 mailCheckWorker.on("failed", (job, err) => {
   console.error(`[mailCheck] Job ${job?.id} failed:`, err.message);
+});
+
+// Schedule repeatable IMAP polling every 5 minutes
+const { Queue } = require("bullmq");
+const mailCheckQueue = new Queue("mailCheck", { connection });
+
+mailCheckQueue.add("checkMail", {}, {
+  repeat: { every: 5 * 60 * 1000 },
+  removeOnComplete: true,
+  removeOnFail: 100,
+}).then(() => {
+  console.log("[mailCheck] Repeatable job scheduled (every 5 min)");
+}).catch((err) => {
+  console.error("[mailCheck] Failed to schedule repeatable job:", err.message);
 });
 
 console.log("Worker started. Listening for jobs...");

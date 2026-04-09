@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { ProjectTaskList } from "./ProjectTaskList";
 import { ProjectChat } from "./ProjectChat";
 import { ProjectEditButton } from "./ProjectEditButton";
+import { ProjectImageUpload, ProjectImageDelete } from "./ProjectImages";
 import type { Role } from "@/types";
 
 export default async function ProjectPage({
@@ -183,6 +184,77 @@ export default async function ProjectPage({
           />
         </div>
       </div>
+
+      {/* Фотографии проекта */}
+      {canEdit && <ProjectImageUpload projectId={project.id} />}
+
+      {project.projectImages.length > 0 && (
+        <div className="space-y-4">
+          {/* Эскизы заказа */}
+          {project.projectImages.filter((img) => img.imageType === "order").length > 0 && (
+            <div className="p-4 rounded-lg border bg-card">
+              <h2 className="text-sm font-semibold mb-3">Эскизы заказа</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {project.projectImages
+                  .filter((img) => img.imageType === "order")
+                  .map((img) => (
+                    <div key={img.id} className="relative group">
+                      <a
+                        href={`/api/files/${img.filePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
+                      >
+                        <img
+                          src={`/api/files/${img.filePath}`}
+                          alt={img.fileName}
+                          className="w-full h-full object-cover"
+                        />
+                      </a>
+                      {canEdit && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ProjectImageDelete projectId={project.id} imageId={img.id} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Фото производства */}
+          {project.projectImages.filter((img) => img.imageType === "production").length > 0 && (
+            <div className="p-4 rounded-lg border bg-card">
+              <h2 className="text-sm font-semibold mb-3">Фото производства</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {project.projectImages
+                  .filter((img) => img.imageType === "production")
+                  .map((img) => (
+                    <div key={img.id} className="relative group">
+                      <a
+                        href={`/api/files/${img.filePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
+                      >
+                        <img
+                          src={`/api/files/${img.filePath}`}
+                          alt={img.fileName}
+                          className="w-full h-full object-cover"
+                        />
+                      </a>
+                      {canEdit && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ProjectImageDelete projectId={project.id} imageId={img.id} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Чат проекта */}
       <div className="p-4 rounded-lg border bg-card">

@@ -22,6 +22,7 @@ export function ClientActions({ client, userId }: ClientActionsProps) {
   const [rejectReason, setRejectReason] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isTeamVersion, setIsTeamVersion] = useState(false);
 
   const handleConvert = async () => {
     if (!confirm("Перевести клиента в договор?")) return;
@@ -55,6 +56,9 @@ export function ClientActions({ client, userId }: ClientActionsProps) {
     for (const file of files) {
       const form = new FormData();
       form.append("file", file);
+      if (isTeamVersion) {
+        form.append("isTeamVersion", "true");
+      }
       await fetch(`/api/clients/${client.id}/files`, {
         method: "POST",
         body: form,
@@ -62,6 +66,7 @@ export function ClientActions({ client, userId }: ClientActionsProps) {
     }
     router.refresh();
     setShowUpload(false);
+    setIsTeamVersion(false);
   };
 
   return (
@@ -113,6 +118,15 @@ export function ClientActions({ client, userId }: ClientActionsProps) {
               accept=".xlsx,.xls,.pdf"
               label="Выберите файл сметы (Excel, PDF)"
             />
+            <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isTeamVersion}
+                onChange={(e) => setIsTeamVersion(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span>Командная версия (ТЗ без цен)</span>
+            </label>
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowUpload(false)}
