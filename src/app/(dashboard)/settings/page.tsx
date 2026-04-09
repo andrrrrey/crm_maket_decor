@@ -8,6 +8,7 @@ import { ru } from "date-fns/locale";
 import { OpenMonthsSettings } from "./OpenMonthsSettings";
 import { UserBadge } from "./UserBadge";
 import { NewUserForm } from "./NewUserForm";
+import { UserEditButton, ProfileForm } from "./UserEditForm";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -84,8 +85,20 @@ export default async function SettingsPage() {
                     {u.phone && ` · ${u.phone}`}
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {format(new Date(u.createdAt), "dd.MM.yyyy", { locale: ru })}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(u.createdAt), "dd.MM.yyyy", { locale: ru })}
+                  </span>
+                  <UserEditButton user={{
+                    id: u.id,
+                    name: u.name ?? "",
+                    email: u.email ?? "",
+                    login: u.login,
+                    role: u.role as Role,
+                    isActive: u.isActive,
+                    phone: u.phone,
+                    hasInfoAccess: u.hasInfoAccess,
+                  }} />
                 </div>
               </div>
             ))}
@@ -96,11 +109,7 @@ export default async function SettingsPage() {
       {/* Профиль текущего пользователя */}
       <div className="p-4 rounded-lg border bg-card space-y-3">
         <h2 className="text-sm font-semibold">Мой профиль</h2>
-        <dl className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Имя</dt>
-            <dd>{user?.name}</dd>
-          </div>
+        <dl className="space-y-2 text-sm mb-4">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Логин</dt>
             <dd>{(user as any)?.login}</dd>
@@ -114,6 +123,7 @@ export default async function SettingsPage() {
             <dd>{ROLE_LABELS[user?.role as Role]}</dd>
           </div>
         </dl>
+        <ProfileForm userId={user.id} userName={user.name ?? ""} />
       </div>
     </div>
   );

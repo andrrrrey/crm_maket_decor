@@ -10,6 +10,8 @@ import { ru } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { ClientActions } from "./ClientActions";
+import { ClientStatusSelect, ClientEditForm } from "./ClientEditForm";
+import type { ClientStatus, ProjectType } from "@/types";
 
 export default async function ClientPage({
   params,
@@ -49,7 +51,25 @@ export default async function ClientPage({
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{client.clientName}</h1>
-            <ClientStatusBadge status={client.status} />
+            {canEdit ? (
+              <ClientStatusSelect
+                client={{
+                  id: client.id,
+                  clientName: client.clientName,
+                  status: client.status as ClientStatus,
+                  projectType: client.projectType as ProjectType,
+                  dateReceived: client.dateReceived.toISOString(),
+                  meetingDate: client.meetingDate,
+                  projectDate: client.projectDate?.toISOString() ?? null,
+                  venue: client.venue,
+                  source: client.source,
+                  projectIdea: client.projectIdea,
+                  isRejected: client.isRejected,
+                }}
+              />
+            ) : (
+              <ClientStatusBadge status={client.status} />
+            )}
             {client.isRejected && (
               <span className="text-xs text-muted-foreground">
                 · #{client.number}
@@ -60,7 +80,26 @@ export default async function ClientPage({
             Менеджер: {client.manager.name}
           </p>
         </div>
-        {canEdit && <ClientActions client={client} userId={user.id} />}
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <ClientEditForm
+              client={{
+                id: client.id,
+                clientName: client.clientName,
+                status: client.status as ClientStatus,
+                projectType: client.projectType as ProjectType,
+                dateReceived: client.dateReceived.toISOString(),
+                meetingDate: client.meetingDate,
+                projectDate: client.projectDate?.toISOString() ?? null,
+                venue: client.venue,
+                source: client.source,
+                projectIdea: client.projectIdea,
+                isRejected: client.isRejected,
+              }}
+            />
+            <ClientActions client={client} userId={user.id} />
+          </div>
+        )}
       </div>
 
       {/* Если переведён в договор */}

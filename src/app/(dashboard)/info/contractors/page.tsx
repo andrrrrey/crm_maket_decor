@@ -4,6 +4,7 @@ import { canAccess } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Phone, ArrowLeft } from "lucide-react";
+import { AddContractorButton, EditContractorButton } from "./ContractorActions";
 
 export default async function ContractorsPage() {
   const session = await auth();
@@ -30,6 +31,11 @@ export default async function ContractorsPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="text-2xl font-bold">Подрядчики</h1>
+        {user.role === "DIRECTOR" && (
+          <div className="ml-auto">
+            <AddContractorButton />
+          </div>
+        )}
       </div>
 
       {Object.entries(byCategory).map(([category, items]) => (
@@ -39,7 +45,19 @@ export default async function ContractorsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {items.map((c) => (
-              <div key={c.id} className="p-3 rounded-lg border bg-card">
+              <div key={c.id} className="p-3 rounded-lg border bg-card relative">
+                {user.role === "DIRECTOR" && (
+                  <div className="absolute top-2 right-2">
+                    <EditContractorButton contractor={{
+                      id: c.id,
+                      category: c.category,
+                      companyName: c.companyName,
+                      address: c.address,
+                      phone: c.phone,
+                      notes: c.notes,
+                    }} />
+                  </div>
+                )}
                 <div className="font-medium text-sm">{c.companyName}</div>
                 {c.address && (
                   <div className="text-xs text-muted-foreground mt-1">{c.address}</div>

@@ -1,10 +1,10 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import { Bell, LogOut, Moon, Sun, Search, ImageIcon } from "lucide-react";
+import { Bell, LogOut, Moon, Sun, Search, ImageIcon, Check } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNotifications } from "@/hooks/useNotifications";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { WallpaperPicker } from "@/components/layout/WallpaperPicker";
 
@@ -12,10 +12,23 @@ export function Header() {
   const { data: session } = useSession();
   const { setTheme, theme } = useTheme();
   const user = session?.user as any;
-  const { unreadCount } = useNotifications(user?.id);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [showWallpaper, setShowWallpaper] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,15 +82,73 @@ export function Header() {
         </button>
 
         {/* Уведомления */}
-        <button
-          className="relative p-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
-          title="Уведомления"
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full" />
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+            title="Уведомления"
+          >
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full" />
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 top-10 z-50 w-80 bg-popover border rounded-lg shadow-lg overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 border-b">
+                <span className="text-sm font-medium">Уведомления</span>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => markAllAsRead()}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Прочитать все
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-4 text-center">
+                    Нет уведомлений
+                  </p>
+                ) : (
+                  notifications.slice(0, 20).map((n) => (
+                    <div
+                      key={n.id}
+                      className={`px-3 py-2 border-b last:border-0 hover:bg-accent/50 transition-colors cursor-pointer ${
+                        !n.isRead ? "bg-primary/5" : ""
+                      }`}
+                      onClick={() => {
+                        if (!n.isRead) markAsRead(n.id);
+                        if (n.link) {
+                          router.push(n.link);
+                          setShowNotifications(false);
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm truncate ${!n.isRead ? "font-medium" : ""}`}>
+                            {n.title}
+                          </p>
+                          {n.body && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {n.body}
+                            </p>
+                          )}
+                        </div>
+                        {!n.isRead && (
+                          <span className="h-2 w-2 bg-primary rounded-full shrink-0 mt-1.5" />
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           )}
-        </button>
+        </div>
 
         {/* Имя пользователя */}
         {user && (

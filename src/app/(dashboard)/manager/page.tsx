@@ -2,7 +2,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { CheckCircle2, Circle } from "lucide-react";
+import {
+  TaskToggle,
+  TaskDeleteButton,
+  ExpenseDeleteButton,
+  AddTaskForm,
+  AddExpenseForm,
+} from "./ManagerActions";
 
 export default async function ManagerPage() {
   const session = await auth();
@@ -41,13 +47,9 @@ export default async function ManagerPage() {
               <p className="text-sm text-muted-foreground">Нет задач</p>
             ) : (
               tasks.map((task) => (
-                <div key={task.id} className="flex items-start gap-2 text-sm">
-                  {task.isCompleted ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  )}
-                  <div>
+                <div key={task.id} className="flex items-start gap-2 text-sm group">
+                  <TaskToggle taskId={task.id} isCompleted={task.isCompleted} />
+                  <div className="flex-1 min-w-0">
                     <p className={task.isCompleted ? "line-through text-muted-foreground" : ""}>
                       {task.title}
                     </p>
@@ -57,9 +59,11 @@ export default async function ManagerPage() {
                       </p>
                     )}
                   </div>
+                  <TaskDeleteButton taskId={task.id} />
                 </div>
               ))
             )}
+            <AddTaskForm />
           </div>
         </div>
 
@@ -76,8 +80,8 @@ export default async function ManagerPage() {
               <p className="text-sm text-muted-foreground">Нет расходов</p>
             ) : (
               expenses.map((expense) => (
-                <div key={expense.id} className="flex items-center justify-between text-sm">
-                  <div>
+                <div key={expense.id} className="flex items-center justify-between text-sm group">
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium truncate max-w-[180px]">
                       {expense.description}
                     </p>
@@ -86,12 +90,16 @@ export default async function ManagerPage() {
                       {format(new Date(expense.date), "dd.MM.yyyy", { locale: ru })}
                     </p>
                   </div>
-                  <span className="font-mono text-sm">
-                    {Number(expense.amount).toLocaleString("ru-RU")} ₽
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm">
+                      {Number(expense.amount).toLocaleString("ru-RU")} ₽
+                    </span>
+                    <ExpenseDeleteButton expenseId={expense.id} />
+                  </div>
                 </div>
               ))
             )}
+            <AddExpenseForm />
           </div>
         </div>
       </div>

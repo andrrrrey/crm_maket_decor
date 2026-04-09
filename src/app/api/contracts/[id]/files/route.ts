@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAction, Actions } from "@/lib/logger";
-import { saveBuffer } from "@/lib/upload";
+import { saveBuffer, deleteFile } from "@/lib/upload";
 import { shouldFilterByManager } from "@/lib/permissions";
 
 export async function GET(
@@ -73,4 +73,32 @@ export async function POST(
   });
 
   return NextResponse.json({ data: contractFile }, { status: 201 });
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = session.user as any;
+  if (user.role !== "DIRECTOR" && user.role !== "MANAGER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const fileId = searchParams.get("fileId");
+  if (!fileId) return NextResponse.json({ error: "fileId required" }, { status: 400 });
+
+  const file = await prisma.contractFile.findUnique({ where: { id: fileId } });
+  if (!file || file.contractId !== params.id) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  await deleteFile(file.filePath);
+  await prisma.contractFile.delete({ where: { id: fileId } });
+  await logAction(user.id, Actions.FILE_DELETE, "contract", params.id, { fileId });
+
+  return NextResponse.json({ message: "Deleted" });
 }

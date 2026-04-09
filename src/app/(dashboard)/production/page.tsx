@@ -4,7 +4,7 @@ import { shouldFilterByOpenMonths } from "@/lib/permissions";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { CheckCircle2, Circle } from "lucide-react";
+import { ProductionTaskToggle } from "./ProductionTaskToggle";
 
 export default async function ProductionPage() {
   const session = await auth();
@@ -68,23 +68,27 @@ export default async function ProductionPage() {
                   <h3 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                     Задачи ({completedTasks}/{project.tasks.length})
                   </h3>
+                  {project.tasks.length > 0 && (
+                    <div className="w-full bg-muted rounded-full h-1.5 mb-2">
+                      <div
+                        className="bg-green-500 h-1.5 rounded-full transition-all"
+                        style={{
+                          width: `${(completedTasks / project.tasks.length) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-1">
                     {project.tasks.map((task) => (
-                      <div key={task.id} className="flex items-center gap-2 text-sm">
-                        {task.isCompleted ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
-                        )}
-                        <span className={task.isCompleted ? "line-through text-muted-foreground" : ""}>
-                          {task.title}
-                        </span>
-                        {task.completedBy && (
-                          <span className="text-xs text-muted-foreground">
-                            — {task.completedBy}
-                          </span>
-                        )}
-                      </div>
+                      <ProductionTaskToggle
+                        key={task.id}
+                        taskId={task.id}
+                        projectId={project.id}
+                        title={task.title}
+                        isCompleted={task.isCompleted}
+                        completedBy={task.completedBy}
+                        type="task"
+                      />
                     ))}
                   </div>
                 </div>
@@ -98,16 +102,15 @@ export default async function ProductionPage() {
                   </h3>
                   <div className="space-y-1">
                     {project.purchases.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2 text-sm">
-                        {item.isCompleted ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
-                        )}
-                        <span className={item.isCompleted ? "line-through text-muted-foreground" : ""}>
-                          {item.title}
-                        </span>
-                      </div>
+                      <ProductionTaskToggle
+                        key={item.id}
+                        taskId={item.id}
+                        projectId={project.id}
+                        title={item.title}
+                        isCompleted={item.isCompleted}
+                        completedBy={null}
+                        type="purchase"
+                      />
                     ))}
                   </div>
                 </div>

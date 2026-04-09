@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { STAFF_SECTION_LABELS } from "@/lib/constants";
 import Link from "next/link";
 import { Phone, Car } from "lucide-react";
+import { AddStaffButton, EditStaffButton } from "./StaffActions";
 
 export default async function StaffPage() {
   const session = await auth();
@@ -30,12 +31,15 @@ export default async function StaffPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Персонал</h1>
-        <Link
-          href="/info/contractors"
-          className="px-4 py-2 border rounded-md text-sm hover:bg-accent transition-colors"
-        >
-          Подрядчики
-        </Link>
+        <div className="flex items-center gap-2">
+          {user.role === "DIRECTOR" && <AddStaffButton />}
+          <Link
+            href="/info/contractors"
+            className="px-4 py-2 border rounded-md text-sm hover:bg-accent transition-colors"
+          >
+            Подрядчики
+          </Link>
+        </div>
       </div>
 
       {sectionOrder.map((section) => {
@@ -49,7 +53,21 @@ export default async function StaffPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {members.map((person) => (
-                <div key={person.id} className="p-3 rounded-lg border bg-card">
+                <div key={person.id} className="p-3 rounded-lg border bg-card relative">
+                  {user.role === "DIRECTOR" && (
+                    <div className="absolute top-2 right-2">
+                      <EditStaffButton person={{
+                        id: person.id,
+                        section: person.section,
+                        fullName: person.fullName,
+                        position: person.position,
+                        phone: person.phone,
+                        hasVehicle: person.hasVehicle,
+                        startDate: person.startDate,
+                        notes: person.notes,
+                      }} />
+                    </div>
+                  )}
                   <div className="font-medium text-sm">{person.fullName}</div>
                   <div className="text-xs text-muted-foreground">{person.position}</div>
                   <div className="mt-2 space-y-1">
