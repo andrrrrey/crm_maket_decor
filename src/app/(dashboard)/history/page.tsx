@@ -4,6 +4,7 @@ import { canViewAllHistory } from "@/lib/permissions";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ROLE_LABELS } from "@/lib/constants";
+import { formatHistoryEntry } from "@/lib/historyFormatter";
 import type { Role } from "@/types";
 
 export default async function HistoryPage({
@@ -62,20 +63,10 @@ export default async function HistoryPage({
                   <span className="text-xs text-muted-foreground">
                     {ROLE_LABELS[entry.user.role as Role]}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-muted text-xs font-mono">
-                    {entry.action}
-                  </span>
-                  {entry.entityId && (
-                    <span className="text-xs text-muted-foreground truncate">
-                      ({entry.entityType}: {entry.entityId.slice(0, 8)}...)
-                    </span>
-                  )}
                 </div>
-                {entry.details && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {JSON.stringify(entry.details)}
-                  </p>
-                )}
+                <p className="text-sm text-foreground mt-1">
+                  {formatHistoryEntry(entry.action, entry.entityType, entry.details)}
+                </p>
               </div>
               <time className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
                 {format(new Date(entry.createdAt), "dd.MM.yyyy HH:mm", {
