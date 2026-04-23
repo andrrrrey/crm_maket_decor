@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAction, Actions } from "@/lib/logger";
-import { shouldFilterByManager } from "@/lib/permissions";
 
 export async function POST(
   req: NextRequest,
@@ -23,7 +22,7 @@ export async function POST(
 
   if (!client) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (shouldFilterByManager(user.role) && client.managerId !== user.id) {
+  if (user.role === "MANAGER" && client.managerId !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -33,7 +32,6 @@ export async function POST(
 
   const body = await req.json().catch(() => ({}));
 
-  // Создать договор на основе данных клиента
   const contract = await prisma.contract.create({
     data: {
       dateSignedAt: body.dateSignedAt ? new Date(body.dateSignedAt) : new Date(),
@@ -45,7 +43,24 @@ export async function POST(
     },
   });
 
-  // Перенести файлы смет: clientId → contractId
+  // Create a calendar entry for the installation date
+  const installDate = client.projectDate ?? new Date();
+  const label = [
+    `№${contract.contractNumber}`,
+    client.clientName,
+    client.venue,
+  ].filter(Boolean).join(" · ");
+
+  await prisma.calendarEntry.create({
+    data: {
+      date: installDate,
+      label,
+      color: "#3B82F6",
+      entryType: "contract",
+    },
+  });
+
+  // Transfer estimate files from client to contract
   if (client.estimates.length > 0) {
     await prisma.estimateFile.updateMany({
       where: { clientId: client.id },
@@ -53,7 +68,6 @@ export async function POST(
     });
   }
 
-  // Обновить статус клиента
   await prisma.client.update({
     where: { id: client.id },
     data: { status: "CONTRACT" },

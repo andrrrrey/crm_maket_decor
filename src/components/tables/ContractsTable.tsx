@@ -13,10 +13,21 @@ const columns: ColumnDef<ContractWithManager>[] = [
     accessorKey: "contractNumber",
     header: "№",
     cell: ({ row }) => (
-      <span className="text-muted-foreground text-xs">
+      <Link href={`/contracts/${row.original.id}`} className="text-muted-foreground text-xs hover:text-primary transition-colors">
         №{row.original.contractNumber}
-      </span>
+      </Link>
     ),
+  },
+  {
+    accessorKey: "installDate",
+    header: "Дата монтажа",
+    cell: ({ row }) =>
+      format(new Date(row.original.installDate), "dd.MM.yyyy", { locale: ru }),
+  },
+  {
+    accessorKey: "mockupStatus",
+    header: "Макет",
+    cell: ({ row }) => <MockupStatusBadge status={row.original.mockupStatus} />,
   },
   {
     accessorKey: "clientName",
@@ -31,15 +42,9 @@ const columns: ColumnDef<ContractWithManager>[] = [
     ),
   },
   {
-    accessorKey: "mockupStatus",
-    header: "Макет",
-    cell: ({ row }) => <MockupStatusBadge status={row.original.mockupStatus} />,
-  },
-  {
-    accessorKey: "installDate",
-    header: "Дата монтажа",
-    cell: ({ row }) =>
-      format(new Date(row.original.installDate), "dd.MM.yyyy", { locale: ru }),
+    accessorKey: "organizerName",
+    header: "Организатор",
+    cell: ({ row }) => (row.original as any).organizerName ?? "—",
   },
   {
     accessorKey: "venue",
@@ -48,10 +53,28 @@ const columns: ColumnDef<ContractWithManager>[] = [
   },
   {
     accessorKey: "totalAmount",
-    header: "Сумма",
+    header: "Общая сумма",
     cell: ({ row }) =>
       row.original.totalAmount
         ? `${Number(row.original.totalAmount).toLocaleString("ru-RU")} ₽`
+        : "—",
+  },
+  {
+    accessorKey: "prepaymentDate",
+    header: "Дата предоплаты",
+    cell: ({ row }) => row.original.prepaymentDate ?? "—",
+  },
+  {
+    accessorKey: "invoiceNumber",
+    header: "№ счёта",
+    cell: ({ row }) => row.original.invoiceNumber ?? "—",
+  },
+  {
+    accessorKey: "prepaymentAmount",
+    header: "Сумма предоплаты",
+    cell: ({ row }) =>
+      row.original.prepaymentAmount
+        ? `${Number(row.original.prepaymentAmount).toLocaleString("ru-RU")} ₽`
         : "—",
   },
   {

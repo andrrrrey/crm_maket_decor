@@ -1,9 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { notFound, redirect } from "next/navigation";
-import { shouldFilterByManager } from "@/lib/permissions";
+import { notFound } from "next/navigation";
 import { ClientStatusBadge } from "@/components/shared/StatusBadge";
-import { FileList } from "@/components/files/FileList";
+import { EstimatesList } from "./EstimatesList";
 import { PROJECT_TYPE_LABELS } from "@/lib/constants";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -31,10 +30,6 @@ export default async function ClientPage({
   });
 
   if (!client) notFound();
-
-  if (shouldFilterByManager(user.role) && client.managerId !== user.id) {
-    notFound();
-  }
 
   const canEdit = user.role === "DIRECTOR" || user.role === "MANAGER";
 
@@ -185,7 +180,8 @@ export default async function ClientPage({
       {/* Файлы смет */}
       <div className="p-4 rounded-lg border bg-card">
         <h2 className="text-sm font-semibold mb-3">Сметы</h2>
-        <FileList
+        <EstimatesList
+          clientId={client.id}
           files={client.estimates.map((f) => ({
             ...f,
             uploadedAt: f.uploadedAt.toISOString(),

@@ -26,13 +26,13 @@ export async function GET(req: NextRequest) {
   const showRejected = searchParams.get("rejected") === "true";
   const managerId = searchParams.get("managerId");
 
-  const where: any = {
-    isRejected: showRejected,
-  };
+  const where: any = { isRejected: showRejected };
 
-  if (shouldFilterByManager(user.role)) {
-    where.managerId = user.id;
-  } else if (managerId) {
+  if (!showRejected) {
+    where.status = { not: "CONTRACT" };
+  }
+
+  if (user.role === "DIRECTOR" && managerId) {
     where.managerId = managerId;
   }
 

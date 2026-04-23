@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { shouldFilterByManager } from "@/lib/permissions";
 import { MockupStatusBadge } from "@/components/shared/StatusBadge";
 import { FileListWithDelete } from "@/components/files/FileListWithDelete";
 import { format } from "date-fns";
@@ -33,10 +32,6 @@ export default async function ContractPage({
 
   if (!contract) notFound();
 
-  if (shouldFilterByManager(user.role) && contract.managerId !== user.id) {
-    notFound();
-  }
-
   const canEdit = user.role === "DIRECTOR" || user.role === "MANAGER";
 
   const contractFiles = contract.contractFiles.filter(
@@ -65,8 +60,10 @@ export default async function ContractPage({
               <MockupStatusSelect
                 contract={{
                   id: contract.id,
+                  contractNumber: contract.contractNumber,
                   mockupStatus: contract.mockupStatus as ContractMockupStatus,
                   clientName: contract.clientName,
+                  organizerName: contract.organizerName ?? null,
                   venue: contract.venue,
                   totalAmount: contract.totalAmount?.toString() ?? null,
                   prepaymentDate: contract.prepaymentDate,
@@ -83,7 +80,9 @@ export default async function ContractPage({
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {contract.clientName} · Менеджер: {contract.manager.name}
+            {contract.clientName}
+            {contract.organizerName && ` · Орг: ${contract.organizerName}`}
+            {" · "}Менеджер: {contract.manager.name}
           </p>
         </div>
         {canEdit && (
@@ -97,8 +96,10 @@ export default async function ContractPage({
             <ContractEditForm
               contract={{
                 id: contract.id,
+                contractNumber: contract.contractNumber,
                 mockupStatus: contract.mockupStatus as ContractMockupStatus,
                 clientName: contract.clientName,
+                organizerName: contract.organizerName ?? null,
                 venue: contract.venue,
                 totalAmount: contract.totalAmount?.toString() ?? null,
                 prepaymentDate: contract.prepaymentDate,

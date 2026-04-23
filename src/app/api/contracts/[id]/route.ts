@@ -6,10 +6,12 @@ import { shouldFilterByManager } from "@/lib/permissions";
 import { z } from "zod";
 
 const updateSchema = z.object({
+  contractNumber: z.number().int().positive().optional(),
   dateSignedAt: z.string().optional(),
   installDate: z.string().optional(),
   mockupStatus: z.enum(["APPROVED", "WAITING", "IN_PROGRESS", "PENDING", "TRANSFERRED", "CANCELLED"]).optional(),
   clientName: z.string().optional(),
+  organizerName: z.string().optional().nullable(),
   venue: z.string().optional(),
   totalAmount: z.number().optional().nullable(),
   prepaymentDate: z.string().optional(),
@@ -77,10 +79,12 @@ export async function PUT(
   const updated = await prisma.contract.update({
     where: { id: params.id },
     data: {
+      ...(data.contractNumber !== undefined && { contractNumber: data.contractNumber }),
       ...(data.dateSignedAt && { dateSignedAt: new Date(data.dateSignedAt) }),
       ...(data.installDate && { installDate: new Date(data.installDate) }),
       ...(data.mockupStatus && { mockupStatus: data.mockupStatus }),
       ...(data.clientName && { clientName: data.clientName }),
+      ...(data.organizerName !== undefined && { organizerName: data.organizerName }),
       ...(data.venue !== undefined && { venue: data.venue }),
       ...(data.totalAmount !== undefined && { totalAmount: data.totalAmount }),
       ...(data.prepaymentDate !== undefined && { prepaymentDate: data.prepaymentDate }),

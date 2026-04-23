@@ -9,8 +9,10 @@ import { FileUpload } from "@/components/files/FileUpload";
 
 interface ContractData {
   id: string;
+  contractNumber: number;
   mockupStatus: ContractMockupStatus;
   clientName: string;
+  organizerName: string | null;
   venue: string | null;
   totalAmount: string | null;
   prepaymentDate: string | null;
@@ -66,7 +68,9 @@ export function ContractEditForm({ contract }: { contract: ContractData }) {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
+    contractNumber: contract.contractNumber.toString(),
     clientName: contract.clientName,
+    organizerName: contract.organizerName ?? "",
     venue: contract.venue ?? "",
     totalAmount: contract.totalAmount ?? "",
     prepaymentDate: contract.prepaymentDate ?? "",
@@ -84,7 +88,9 @@ export function ContractEditForm({ contract }: { contract: ContractData }) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        contractNumber: Number(form.contractNumber) || contract.contractNumber,
         clientName: form.clientName,
+        organizerName: form.organizerName || null,
         venue: form.venue || undefined,
         totalAmount: form.totalAmount ? Number(form.totalAmount) : undefined,
         prepaymentDate: form.prepaymentDate || undefined,
@@ -124,11 +130,31 @@ export function ContractEditForm({ contract }: { contract: ContractData }) {
         </div>
 
         <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">№ договора</label>
+              <input
+                type="number"
+                value={form.contractNumber}
+                onChange={(e) => setForm({ ...form, contractNumber: e.target.value })}
+                className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Заказчик</label>
+              <input
+                value={form.clientName}
+                onChange={(e) => setForm({ ...form, clientName: e.target.value })}
+                className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="text-xs text-muted-foreground">Заказчик</label>
+            <label className="text-xs text-muted-foreground">Организатор</label>
             <input
-              value={form.clientName}
-              onChange={(e) => setForm({ ...form, clientName: e.target.value })}
+              value={form.organizerName}
+              onChange={(e) => setForm({ ...form, organizerName: e.target.value })}
               className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
             />
           </div>

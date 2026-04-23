@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { shouldFilterByManager, shouldFilterByOpenMonths } from "@/lib/permissions";
+import { shouldFilterByOpenMonths } from "@/lib/permissions";
 import Link from "next/link";
 import { Plus, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
@@ -16,10 +16,7 @@ export default async function ProjectsPage({
 
   const where: any = {};
 
-  if (shouldFilterByManager(user.role)) {
-    where.managerId = user.id;
-  }
-
+  // Все роли видят все проекты (удалён фильтр по менеджеру)
   if (searchParams.month) {
     where.month = searchParams.month;
   }

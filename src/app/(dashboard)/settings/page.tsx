@@ -6,6 +6,7 @@ import type { Role } from "@/types";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { OpenMonthsSettings } from "./OpenMonthsSettings";
+import { ManagerPlanSettings } from "./ManagerPlanSettings";
 import { UserBadge } from "./UserBadge";
 import { NewUserForm } from "./NewUserForm";
 import { UserEditButton, ProfileForm } from "./UserEditForm";
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
   const user = session?.user as any;
   const isDirector = canManageUsers(user.role);
 
-  const [users, openMonthsSettings] = await Promise.all([
+  const [users, directorSettings] = await Promise.all([
     isDirector
       ? prisma.user.findMany({
           select: {
@@ -37,7 +38,9 @@ export default async function SettingsPage() {
     }),
   ]);
 
-  const openMonths = (openMonthsSettings?.openMonths as string[]) ?? [];
+  const openMonths = (directorSettings?.openMonths as string[]) ?? [];
+  const yearPlans = (directorSettings?.yearPlans as Record<string, number>) ?? {};
+  const managers = users.filter((u) => u.role === "MANAGER" && u.isActive);
 
   return (
     <div className="max-w-4xl space-y-8">
@@ -53,6 +56,22 @@ export default async function SettingsPage() {
             </p>
           </div>
           <OpenMonthsSettings initialMonths={openMonths} />
+        </div>
+      )}
+
+      {/* Годовой план по менеджерам */}
+      {isDirector && (
+        <div className="p-4 rounded-lg border bg-card space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold">Годовой план менеджеров</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Используется в разделе Договоры для отображения прогресса
+            </p>
+          </div>
+          <ManagerPlanSettings
+            managers={managers.map((m) => ({ id: m.id, name: m.name ?? m.login }))}
+            initialPlans={yearPlans}
+          />
         </div>
       )}
 
