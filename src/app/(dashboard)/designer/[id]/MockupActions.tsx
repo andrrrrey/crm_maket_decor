@@ -303,4 +303,44 @@ export function MockupImageDelete({
   );
 }
 
+export function MockupDeleteButton({
+  mockupId,
+  designerId,
+  userId,
+  userRole,
+}: {
+  mockupId: string;
+  designerId: string;
+  userId: string;
+  userRole: string;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const canDelete =
+    userRole === "DIRECTOR" ||
+    (userRole === "DESIGNER" && designerId === userId);
+
+  if (!canDelete) return null;
+
+  const handleDelete = async () => {
+    if (!confirm("Удалить макет? Это действие необратимо.")) return;
+    setLoading(true);
+    await fetch(`/api/designer/${mockupId}`, { method: "DELETE" });
+    setLoading(false);
+    router.push("/designer");
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-2 rounded-md hover:bg-accent transition-colors text-destructive"
+      title="Удалить макет"
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
+  );
+}
+
 export { STATUS_LABELS, STATUS_COLORS, ZONES };

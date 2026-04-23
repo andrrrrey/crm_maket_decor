@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { shouldFilterByManager } from "@/lib/permissions";
 import { ClientsTable } from "@/components/tables/ClientsTable";
 import { ManagerFilter } from "@/components/filters/ManagerFilter";
 import Link from "next/link";
@@ -18,9 +17,13 @@ export default async function ClientsPage({
   const showRejected = searchParams.rejected === "true";
   const where: any = { isRejected: showRejected };
 
-  if (shouldFilterByManager(user.role)) {
-    where.managerId = user.id;
-  } else if (searchParams.managerId) {
+  // Скрываем клиентов, переведённых в договор (только в активных)
+  if (!showRejected) {
+    where.status = { not: "CONTRACT" };
+  }
+
+  // Менеджер видит всех, DIRECTOR может фильтровать по менеджеру
+  if (user.role === "DIRECTOR" && searchParams.managerId) {
     where.managerId = searchParams.managerId;
   }
 

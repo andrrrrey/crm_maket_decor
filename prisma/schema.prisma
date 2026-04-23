@@ -49,6 +49,7 @@ model UserSettings {
   id         String @id @default(cuid())
   userId     String @unique
   openMonths Json   @default("[]")
+  yearPlans  Json   @default("{}")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -129,6 +130,7 @@ model Contract {
   installDate      DateTime
   mockupStatus     ContractMockupStatus @default(PENDING)
   clientName       String
+  organizerName    String?
   venue            String?
   totalAmount      Decimal?
   prepaymentDate   String?

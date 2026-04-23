@@ -88,6 +88,7 @@ export type ClientWithManager = Client & {
 
 // Договор с менеджером
 export type ContractWithManager = Contract & {
+  organizerName?: string | null;
   manager: Pick<User, "id" | "name">;
   sourceClient?: Pick<Client, "id" | "clientName"> | null;
 };
