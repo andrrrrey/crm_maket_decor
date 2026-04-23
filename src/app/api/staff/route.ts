@@ -69,3 +69,27 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ data: member }, { status: 201 });
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = session.user as any;
+  if (user.role !== "DIRECTOR") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const existing = await prisma.staff.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  await prisma.staff.delete({ where: { id } });
+  await logAction(user.id, Actions.STAFF_DELETE, "staff", id, {
+    fullName: existing.fullName,
+  });
+
+  return NextResponse.json({ message: "Deleted" });
+}

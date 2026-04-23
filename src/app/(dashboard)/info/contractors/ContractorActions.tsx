@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Save, Pencil } from "lucide-react";
+import { Plus, X, Save, Pencil, Trash2 } from "lucide-react";
 
 export function AddContractorButton() {
   const router = useRouter();
@@ -83,6 +83,30 @@ export function AddContractorButton() {
         </div>
       )}
     </>
+  );
+}
+
+export function DeleteContractorButton({ contractorId }: { contractorId: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm("Удалить подрядчика? Это действие необратимо.")) return;
+    setLoading(true);
+    await fetch(`/api/contractors?id=${contractorId}`, { method: "DELETE" });
+    setLoading(false);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1 rounded hover:bg-accent transition-colors text-destructive"
+      title="Удалить"
+    >
+      <Trash2 className="h-3 w-3" />
+    </button>
   );
 }
 

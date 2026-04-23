@@ -97,7 +97,7 @@ export default async function ClientPage({
                 isRejected: client.isRejected,
               }}
             />
-            <ClientActions client={client} userId={user.id} />
+            <ClientActions client={client} userId={user.id} userRole={user.role} />
           </div>
         )}
       </div>

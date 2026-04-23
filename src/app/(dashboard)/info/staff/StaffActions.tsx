@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Save, Pencil } from "lucide-react";
+import { Plus, X, Save, Pencil, Trash2 } from "lucide-react";
 import { STAFF_SECTION_LABELS } from "@/lib/constants";
 
 const SECTIONS = ["CORE_TEAM", "FREELANCE_MALE", "FREELANCE_FEMALE", "DRIVERS"] as const;
@@ -136,6 +136,30 @@ export function AddStaffButton() {
         </div>
       )}
     </>
+  );
+}
+
+export function DeleteStaffButton({ personId }: { personId: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm("Удалить сотрудника? Это действие необратимо.")) return;
+    setLoading(true);
+    await fetch(`/api/staff?id=${personId}`, { method: "DELETE" });
+    setLoading(false);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1 rounded hover:bg-accent transition-colors text-destructive"
+      title="Удалить"
+    >
+      <Trash2 className="h-3 w-3" />
+    </button>
   );
 }
 
