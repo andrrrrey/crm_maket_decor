@@ -10,6 +10,7 @@ import {
   MockupEditForm,
   MockupImageUpload,
   MockupImageDelete,
+  MockupDeleteButton,
 } from "./MockupActions";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -110,7 +111,17 @@ export default async function MockupDetailPage({
             Дизайнер: {mockup.designer.name} · {mockup.month}
           </p>
         </div>
-        {canEdit && <MockupEditForm mockup={mockupData} />}
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <MockupDeleteButton
+              mockupId={mockup.id}
+              designerId={mockup.designerId}
+              userId={user.id}
+              userRole={user.role}
+            />
+            <MockupEditForm mockup={mockupData} />
+          </div>
+        )}
       </div>
 
       {/* Details */}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Save, AlertTriangle, Search, Pencil } from "lucide-react";
+import { Plus, X, Save, AlertTriangle, Search, Pencil, Trash2 } from "lucide-react";
 
 interface Category {
   id: string;
@@ -397,6 +397,30 @@ export function DamageButton({ item }: { item: { id: string; name: string } }) {
         </div>
       )}
     </>
+  );
+}
+
+export function DeleteItemButton({ item }: { item: { id: string; name: string } }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить «${item.name}»? Это действие необратимо.`)) return;
+    setLoading(true);
+    await fetch(`/api/inventory?id=${item.id}`, { method: "DELETE" });
+    setLoading(false);
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1 rounded hover:bg-accent transition-colors text-destructive"
+      title="Удалить позицию"
+    >
+      <Trash2 className="h-3 w-3" />
+    </button>
   );
 }
 

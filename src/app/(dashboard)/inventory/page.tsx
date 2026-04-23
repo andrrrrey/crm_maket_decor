@@ -7,6 +7,7 @@ import {
   AddItemButton,
   EditItemButton,
   DamageButton,
+  DeleteItemButton,
   InventorySearch,
 } from "./InventoryActions";
 
@@ -41,6 +42,7 @@ export default async function InventoryPage({
   const user = session?.user as any;
 
   const canEdit = user.role === "DIRECTOR" || user.role === "PRODUCTION";
+  const canDelete = user.role === "DIRECTOR";
 
   const categories = await getCategories();
   const totalItems = await prisma.inventoryItem.count();
@@ -131,6 +133,7 @@ export default async function InventoryPage({
                       <>
                         <EditItemButton item={item} />
                         <DamageButton item={item} />
+                        {canDelete && <DeleteItemButton item={item} />}
                       </>
                     )}
                   </div>
@@ -196,6 +199,7 @@ export default async function InventoryPage({
                                       <>
                                         <EditItemButton item={item} />
                                         <DamageButton item={item} />
+                                        {canDelete && <DeleteItemButton item={item} />}
                                       </>
                                     )}
                                   </div>
