@@ -4,7 +4,7 @@ import { canAccess } from "@/lib/permissions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Phone, ArrowLeft } from "lucide-react";
-import { AddContractorButton, EditContractorButton } from "./ContractorActions";
+import { AddContractorButton, EditContractorButton, DeleteContractorButton } from "./ContractorActions";
 
 export default async function ContractorsPage() {
   const session = await auth();
@@ -47,7 +47,7 @@ export default async function ContractorsPage() {
             {items.map((c) => (
               <div key={c.id} className="p-3 rounded-lg border bg-card relative">
                 {user.role === "DIRECTOR" && (
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 flex items-center gap-1">
                     <EditContractorButton contractor={{
                       id: c.id,
                       category: c.category,
@@ -56,6 +56,7 @@ export default async function ContractorsPage() {
                       phone: c.phone,
                       notes: c.notes,
                     }} />
+                    <DeleteContractorButton contractorId={c.id} />
                   </div>
                 )}
                 <div className="font-medium text-sm">{c.companyName}</div>

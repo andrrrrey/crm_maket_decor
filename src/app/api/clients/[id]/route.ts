@@ -103,12 +103,16 @@ export async function DELETE(
 
   const user = session.user as any;
 
-  if (user.role !== "DIRECTOR") {
+  if (user.role !== "DIRECTOR" && user.role !== "MANAGER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const existing = await prisma.client.findUnique({ where: { id: params.id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (user.role === "MANAGER" && existing.managerId !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   await prisma.client.delete({ where: { id: params.id } });
   await logAction(user.id, Actions.CLIENT_DELETE, "client", params.id, {

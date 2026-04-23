@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, ArrowRight, X, Pencil } from "lucide-react";
+import { MoreHorizontal, ArrowRight, X, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 
 interface ClientActionsProps {
@@ -11,11 +11,13 @@ interface ClientActionsProps {
     status: string;
     isRejected: boolean;
     contract: { id: string } | null;
+    managerId: string;
   };
   userId: string;
+  userRole: string;
 }
 
-export function ClientActions({ client, userId }: ClientActionsProps) {
+export function ClientActions({ client, userId, userRole }: ClientActionsProps) {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -23,6 +25,18 @@ export function ClientActions({ client, userId }: ClientActionsProps) {
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isTeamVersion, setIsTeamVersion] = useState(false);
+
+  const canDelete =
+    userRole === "DIRECTOR" ||
+    (userRole === "MANAGER" && client.managerId === userId);
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить клиента? Это действие необратимо.`)) return;
+    setLoading(true);
+    await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+    setLoading(false);
+    router.push("/clients");
+  };
 
   const handleConvert = async () => {
     if (!confirm("Перевести клиента в договор?")) return;
@@ -104,6 +118,16 @@ export function ClientActions({ client, userId }: ClientActionsProps) {
                 Отказ
               </button>
             </>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => { handleDelete(); setShowMenu(false); }}
+              className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors flex items-center gap-2"
+              disabled={loading}
+            >
+              <Trash2 className="h-4 w-4" />
+              Удалить
+            </button>
           )}
         </div>
       )}

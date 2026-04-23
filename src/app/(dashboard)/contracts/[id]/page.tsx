@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { MockupStatusSelect, ContractEditForm, ContractFileUpload } from "./ContractEditForm";
+import { MockupStatusSelect, ContractEditForm, ContractDeleteButton, ContractFileUpload } from "./ContractEditForm";
 import type { ContractMockupStatus } from "@/types";
 
 export default async function ContractPage({
@@ -88,6 +88,12 @@ export default async function ContractPage({
         </div>
         {canEdit && (
           <div className="flex items-center gap-1">
+            <ContractDeleteButton
+              contractId={contract.id}
+              managerId={contract.managerId}
+              userId={user.id}
+              userRole={user.role}
+            />
             <ContractEditForm
               contract={{
                 id: contract.id,

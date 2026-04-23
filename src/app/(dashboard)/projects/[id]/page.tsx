@@ -8,7 +8,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import { ProjectTaskList } from "./ProjectTaskList";
 import { ProjectChat } from "./ProjectChat";
-import { ProjectEditButton } from "./ProjectEditButton";
+import { ProjectEditButton, ProjectDeleteButton } from "./ProjectEditButton";
 import { ProjectImageUpload, ProjectImageDelete } from "./ProjectImages";
 import type { Role } from "@/types";
 
@@ -103,7 +103,14 @@ export default async function ProjectPage({
           </p>
         </div>
         {canEditProject && (
-          <ProjectEditButton
+          <div className="flex items-center gap-2">
+            <ProjectDeleteButton
+              projectId={project.id}
+              managerId={project.managerId}
+              userId={user.id}
+              userRole={user.role}
+            />
+            <ProjectEditButton
             project={{
               id: project.id,
               venue: project.venue,
@@ -118,6 +125,7 @@ export default async function ProjectPage({
             availableContracts={availableContracts}
             currentUserRole={user.role as Role}
           />
+          </div>
         )}
       </div>
 

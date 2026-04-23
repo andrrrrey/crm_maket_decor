@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { STAFF_SECTION_LABELS } from "@/lib/constants";
 import Link from "next/link";
 import { Phone, Car } from "lucide-react";
-import { AddStaffButton, EditStaffButton } from "./StaffActions";
+import { AddStaffButton, EditStaffButton, DeleteStaffButton } from "./StaffActions";
 
 export default async function StaffPage() {
   const session = await auth();
@@ -55,7 +55,7 @@ export default async function StaffPage() {
               {members.map((person) => (
                 <div key={person.id} className="p-3 rounded-lg border bg-card relative">
                   {user.role === "DIRECTOR" && (
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
                       <EditStaffButton person={{
                         id: person.id,
                         section: person.section,
@@ -66,6 +66,7 @@ export default async function StaffPage() {
                         startDate: person.startDate,
                         notes: person.notes,
                       }} />
+                      <DeleteStaffButton personId={person.id} />
                     </div>
                   )}
                   <div className="font-medium text-sm">{person.fullName}</div>

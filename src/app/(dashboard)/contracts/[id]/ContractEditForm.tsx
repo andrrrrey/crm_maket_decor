@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MOCKUP_STATUS_LABELS } from "@/lib/constants";
 import type { ContractMockupStatus } from "@/types";
-import { Pencil, X, Save, ChevronDown, Upload } from "lucide-react";
+import { Pencil, X, Save, ChevronDown, Upload, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 
 interface ContractData {
@@ -243,6 +243,46 @@ export function ContractEditForm({ contract }: { contract: ContractData }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function ContractDeleteButton({
+  contractId,
+  managerId,
+  userId,
+  userRole,
+}: {
+  contractId: string;
+  managerId: string;
+  userId: string;
+  userRole: string;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const canDelete =
+    userRole === "DIRECTOR" ||
+    (userRole === "MANAGER" && managerId === userId);
+
+  if (!canDelete) return null;
+
+  const handleDelete = async () => {
+    if (!confirm("Удалить договор? Это действие необратимо.")) return;
+    setLoading(true);
+    await fetch(`/api/contracts/${contractId}`, { method: "DELETE" });
+    setLoading(false);
+    router.push("/contracts");
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-2 rounded-md hover:bg-accent transition-colors text-destructive"
+      title="Удалить договор"
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
   );
 }
 

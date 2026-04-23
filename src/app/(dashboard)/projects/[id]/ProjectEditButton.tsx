@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, X, Loader2 } from "lucide-react";
+import { Pencil, X, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { CALENDAR_COLORS, ROLE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,47 @@ interface ProjectEditButtonProps {
   managers: ManagerOption[];
   availableContracts: ContractOption[];
   currentUserRole: Role;
+}
+
+export function ProjectDeleteButton({
+  projectId,
+  managerId,
+  userId,
+  userRole,
+}: {
+  projectId: string;
+  managerId: string;
+  userId: string;
+  userRole: string;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const canDelete =
+    userRole === "DIRECTOR" ||
+    (userRole === "MANAGER" && managerId === userId);
+
+  if (!canDelete) return null;
+
+  const handleDelete = async () => {
+    if (!confirm("Удалить проект? Это действие необратимо.")) return;
+    setLoading(true);
+    await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
+    setLoading(false);
+    router.push("/projects");
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors text-destructive"
+      title="Удалить проект"
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+      Удалить
+    </button>
+  );
 }
 
 export function ProjectEditButton({

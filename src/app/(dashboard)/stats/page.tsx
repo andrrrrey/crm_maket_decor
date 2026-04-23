@@ -51,6 +51,9 @@ export default async function StatsPage({
 
   const stats = await getStats(user.id, user.role, year);
 
+  const sortedStatuses = [...stats.clientsByStatus].sort((a, b) => b.count - a.count);
+  const maxStatusCount = sortedStatuses[0]?.count || 1;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -69,9 +72,7 @@ export default async function StatsPage({
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-4">Воронка продаж</h2>
           <div className="space-y-2">
-            {stats.clientsByStatus
-              .sort((a, b) => b.count - a.count)
-              .map((item) => (
+            {sortedStatuses.map((item) => (
                 <div
                   key={item.status}
                   className="flex items-center justify-between text-sm"
@@ -82,11 +83,7 @@ export default async function StatsPage({
                       <div
                         className="bg-primary h-1.5 rounded-full"
                         style={{
-                          width: `${
-                            stats.totalClients > 0
-                              ? (item.count / stats.totalClients) * 100
-                              : 0
-                          }%`,
+                          width: `${(item.count / maxStatusCount) * 100}%`,
                         }}
                       />
                     </div>
