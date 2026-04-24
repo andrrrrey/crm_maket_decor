@@ -7,6 +7,7 @@ import { ManagerFilter } from "@/components/filters/ManagerFilter";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { ClientWithManager } from "@/types";
+import { AutoRefresh } from "@/components/shared/AutoRefresh";
 
 export default async function ClientsPage({
   searchParams,
@@ -50,6 +51,7 @@ export default async function ClientsPage({
 
   return (
     <div className="space-y-4">
+      <AutoRefresh />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Клиенты</h1>

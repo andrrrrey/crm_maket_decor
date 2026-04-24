@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, ArrowRight, X, Trash2 } from "lucide-react";
+import { ArrowRight, X, Trash2, Upload } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
@@ -20,11 +20,11 @@ interface ClientActionsProps {
 
 export function ClientActions({ client, userId, userRole }: ClientActionsProps) {
   const router = useRouter();
-  const [showMenu, setShowMenu] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
   const [showUpload, setShowUpload] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [isTeamVersion, setIsTeamVersion] = useState(false);
 
@@ -49,8 +49,9 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
     });
     const data = await res.json();
     setLoading(false);
+    setShowConvertDialog(false);
     if (data.data?.contractId) {
-      router.push(`/contracts/${data.data.contractId}`);
+      window.location.href = `/contracts/${data.data.contractId}`;
     }
   };
 
@@ -71,13 +72,8 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
     for (const file of files) {
       const form = new FormData();
       form.append("file", file);
-      if (isTeamVersion) {
-        form.append("isTeamVersion", "true");
-      }
-      await fetch(`/api/clients/${client.id}/files`, {
-        method: "POST",
-        body: form,
-      });
+      if (isTeamVersion) form.append("isTeamVersion", "true");
+      await fetch(`/api/clients/${client.id}/files`, { method: "POST", body: form });
     }
     router.refresh();
     setShowUpload(false);
@@ -85,54 +81,56 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
   };
 
   return (
-    <div className="relative">
+    <div className="flex items-center gap-1">
+      {/* Загрузить смету */}
       <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="p-2 rounded-md hover:bg-accent transition-colors"
+        onClick={() => setShowUpload(true)}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors"
+        title="Загрузить смету"
       >
-        <MoreHorizontal className="h-4 w-4" />
+        <Upload className="h-3.5 w-3.5" />
+        Смету
       </button>
 
-      {showMenu && (
-        <div className="absolute right-0 top-10 z-10 w-48 bg-popover border rounded-md shadow-md py-1">
-          <button
-            onClick={() => { setShowUpload(true); setShowMenu(false); }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
-          >
-            Загрузить смету
-          </button>
-          {!client.contract && !client.isRejected && (
-            <>
-              <button
-                onClick={() => { handleConvert(); setShowMenu(false); }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center gap-2"
-                disabled={loading}
-              >
-                <ArrowRight className="h-4 w-4" />
-                В договор
-              </button>
-              <button
-                onClick={() => { setShowRejectDialog(true); setShowMenu(false); }}
-                className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors flex items-center gap-2"
-              >
-                <X className="h-4 w-4" />
-                Отказ
-              </button>
-            </>
-          )}
-          {canDelete && (
-            <button
-              onClick={() => { setShowDeleteDialog(true); setShowMenu(false); }}
-              className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors flex items-center gap-2"
-              disabled={loading}
-            >
-              <Trash2 className="h-4 w-4" />
-              Удалить
-            </button>
-          )}
-        </div>
+      {/* В договор */}
+      {!client.contract && !client.isRejected && (
+        <button
+          onClick={() => setShowConvertDialog(true)}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors text-green-700 dark:text-green-400"
+          title="Перевести в договор"
+        >
+          <ArrowRight className="h-3.5 w-3.5" />
+          В договор
+        </button>
       )}
 
+      {/* Отказ */}
+      {!client.isRejected && (
+        <button
+          onClick={() => setShowRejectDialog(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors text-amber-700 dark:text-amber-400"
+          title="Отметить как отказ"
+        >
+          <X className="h-3.5 w-3.5" />
+          Отказ
+        </button>
+      )}
+
+      {/* Удалить */}
+      {canDelete && (
+        <button
+          onClick={() => setShowDeleteDialog(true)}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors text-destructive"
+          title="Удалить клиента"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Удалить
+        </button>
+      )}
+
+      {/* Диалог удаления */}
       <ConfirmDialog
         open={showDeleteDialog}
         title="Удалить клиента?"
@@ -143,7 +141,19 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
         loading={loading}
       />
 
-      {/* Диалог загрузки */}
+      {/* Диалог перевода в договор */}
+      <ConfirmDialog
+        open={showConvertDialog}
+        title="Перевести в договор?"
+        description="Клиент будет переведён в договор. Будет автоматически создан проект со статусом «Бронь»."
+        confirmLabel="Перевести"
+        variant="default"
+        onConfirm={handleConvert}
+        onCancel={() => setShowConvertDialog(false)}
+        loading={loading}
+      />
+
+      {/* Диалог загрузки сметы */}
       {showUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-lg p-6 w-full max-w-md shadow-xl">

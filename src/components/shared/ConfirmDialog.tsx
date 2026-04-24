@@ -8,6 +8,7 @@ interface ConfirmDialogProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  variant?: "destructive" | "default";
   onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
@@ -19,6 +20,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = "Удалить",
   cancelLabel = "Отмена",
+  variant = "destructive",
   onConfirm,
   onCancel,
   loading = false,
@@ -57,7 +59,11 @@ export function ConfirmDialog({
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-md font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-md font-medium transition-colors disabled:opacity-50 ${
+              variant === "destructive"
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                : "bg-primary text-primary-foreground hover:bg-primary/90"
+            }`}
           >
             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {confirmLabel}

@@ -70,7 +70,7 @@ export default function NewContractPage() {
 
       if (res.ok) {
         const json = await res.json();
-        router.push(`/contracts/${json.data.id}`);
+        window.location.href = `/contracts/${json.data.id}`;
         return;
       }
 
@@ -209,9 +209,9 @@ export default function NewContractPage() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Дата предоплаты</label>
               <input
+                type="date"
                 {...register("prepaymentDate")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="Например: 01.04.2026"
               />
             </div>
           </div>
