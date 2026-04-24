@@ -95,6 +95,14 @@ export async function PUT(
     },
   });
 
+  // When contract is approved, move the linked project to MONTAGE (orange)
+  if (data.mockupStatus === "APPROVED") {
+    await prisma.project.updateMany({
+      where: { contractId: params.id },
+      data: { calendarColor: "#FB923C", projectStatus: "MONTAGE" },
+    });
+  }
+
   await logAction(user.id, Actions.CONTRACT_UPDATE, "contract", params.id, { changes: data });
 
   return NextResponse.json({ data: updated });

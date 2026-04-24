@@ -14,7 +14,7 @@ async function getStats(userId: string, role: string) {
 
   const [totalClients, totalContracts, totalProjects, rejectedClients, clientsByStatus] =
     await Promise.all([
-      prisma.client.count({ where: { ...managerFilter, isRejected: false } }),
+      prisma.client.count({ where: { ...managerFilter, isRejected: false, status: { not: "CONTRACT" } } }),
       prisma.contract.count({ where: managerFilter }),
       prisma.project.count({ where: managerFilter }),
       prisma.client.count({ where: { ...managerFilter, isRejected: true } }),
@@ -191,19 +191,19 @@ export default async function DashboardPage({
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Активных клиентов</dt>
-                  <dd className="font-medium">{stats.totalClients}</dd>
+                  <dd className="font-medium">{stats.totalClients.toLocaleString("ru-RU")}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Отказов</dt>
-                  <dd className="font-medium text-destructive">{stats.rejectedClients}</dd>
+                  <dd className="font-medium text-destructive">{stats.rejectedClients.toLocaleString("ru-RU")}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Договоров</dt>
-                  <dd className="font-medium">{stats.totalContracts}</dd>
+                  <dd className="font-medium">{stats.totalContracts.toLocaleString("ru-RU")}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Проектов</dt>
-                  <dd className="font-medium">{stats.totalProjects}</dd>
+                  <dd className="font-medium">{stats.totalProjects.toLocaleString("ru-RU")}</dd>
                 </div>
                 <div className="flex justify-between border-t pt-3">
                   <dt className="text-muted-foreground">Конверсия</dt>

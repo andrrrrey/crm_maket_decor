@@ -223,9 +223,9 @@ export function ContractEditForm({ contract }: { contract: ContractData }) {
             <div>
               <label className="text-xs text-muted-foreground">Дата предоплаты</label>
               <input
+                type="date"
                 value={form.prepaymentDate}
                 onChange={(e) => setForm({ ...form, prepaymentDate: e.target.value })}
-                placeholder="напр. 10.03.2026"
                 className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
               />
             </div>
@@ -297,6 +297,7 @@ export function ContractDeleteButton({
     setLoading(true);
     await fetch(`/api/contracts/${contractId}`, { method: "DELETE" });
     setLoading(false);
+    router.refresh();
     router.push("/contracts");
   };
 

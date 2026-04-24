@@ -162,9 +162,9 @@ export default function NewClientPage() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Дата встречи</label>
               <input
+                type="date"
                 {...register("meetingDate")}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
-                placeholder="Например: 15 марта, 18:00"
               />
             </div>
             <div className="space-y-1">
