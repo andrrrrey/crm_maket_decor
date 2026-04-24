@@ -75,16 +75,18 @@ export default async function ProjectPage({
       ])
     : [[], []];
 
-  // Separate tasks by type
   const productionTasks = project.tasks.filter((t) => t.taskType === "production");
   const generalTasks = project.tasks.filter((t) => t.taskType !== "production");
   const completedProduction = productionTasks.filter((t) => t.isCompleted).length;
   const completedGeneral = generalTasks.filter((t) => t.isCompleted).length;
 
-  // Separate images by type
   const hallImages = project.projectImages.filter((img) => img.imageType === "hall" || img.imageType === "order");
   const ceremonyImages = project.projectImages.filter((img) => img.imageType === "ceremony");
   const productionImages = project.projectImages.filter((img) => img.imageType === "production");
+
+  const projectTitle =
+    [project.contract?.clientName, project.venue].filter(Boolean).join(" · ") ||
+    `Проект #${project.number}`;
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -99,9 +101,7 @@ export default async function ProjectPage({
               className="w-4 h-4 rounded-full shrink-0"
               style={{ backgroundColor: project.calendarColor }}
             />
-            <h1 className="text-2xl font-bold">
-              {project.venue ?? `Проект #${project.number}`}
-            </h1>
+            <h1 className="text-2xl font-bold">{projectTitle}</h1>
             {project.isCompleted && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs font-medium">
                 <CheckCircle2 className="h-3 w-3" />
@@ -174,7 +174,6 @@ export default async function ProjectPage({
 
       {/* Производство + Задачи */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Производство */}
         <div className="p-4 rounded-lg border bg-card">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold">
@@ -185,21 +184,13 @@ export default async function ProjectPage({
             <div className="w-full bg-muted rounded-full h-1.5 mb-3">
               <div
                 className="bg-orange-400 h-1.5 rounded-full transition-all"
-                style={{
-                  width: `${productionTasks.length > 0 ? (completedProduction / productionTasks.length) * 100 : 0}%`,
-                }}
+                style={{ width: `${productionTasks.length > 0 ? (completedProduction / productionTasks.length) * 100 : 0}%` }}
               />
             </div>
           )}
-          <ProjectTaskList
-            tasks={productionTasks}
-            projectId={project.id}
-            canEdit={canEdit}
-            taskType="production"
-          />
+          <ProjectTaskList tasks={productionTasks} projectId={project.id} canEdit={canEdit} taskType="production" />
         </div>
 
-        {/* Задачи */}
         <div className="p-4 rounded-lg border bg-card">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold">
@@ -210,142 +201,126 @@ export default async function ProjectPage({
             <div className="w-full bg-muted rounded-full h-1.5 mb-3">
               <div
                 className="bg-green-500 h-1.5 rounded-full transition-all"
-                style={{
-                  width: `${generalTasks.length > 0 ? (completedGeneral / generalTasks.length) * 100 : 0}%`,
-                }}
+                style={{ width: `${generalTasks.length > 0 ? (completedGeneral / generalTasks.length) * 100 : 0}%` }}
               />
             </div>
           )}
+          <ProjectTaskList tasks={generalTasks} projectId={project.id} canEdit={canEdit} taskType="task" />
+        </div>
+      </div>
+
+      {/* Полистирол + Чеклист закупок — half-width grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="p-4 rounded-lg border bg-card">
+          <h2 className="text-sm font-semibold mb-3">Полистирол</h2>
+          <ProjectFabricNote
+            projectId={project.id}
+            initialValue={project.fabricNote}
+            canEdit={canEdit}
+          />
+        </div>
+
+        <div className="p-4 rounded-lg border bg-card">
+          <h2 className="text-sm font-semibold mb-3">
+            Чеклист закупок ({project.purchases.filter((p) => p.isCompleted).length}/{project.purchases.length})
+          </h2>
           <ProjectTaskList
-            tasks={generalTasks}
+            tasks={project.purchases.map((p) => ({
+              ...p,
+              completedBy: null,
+              completedAt: null,
+              taskType: "purchase",
+            }))}
             projectId={project.id}
             canEdit={canEdit}
-            taskType="task"
+            type="purchase"
           />
         </div>
       </div>
 
-      {/* Полистирол / Ткань */}
-      <div className="p-4 rounded-lg border bg-card">
-        <h2 className="text-sm font-semibold mb-3">Полистирол</h2>
-        <ProjectFabricNote
-          projectId={project.id}
-          initialValue={project.fabricNote}
-          canEdit={canEdit}
-        />
-      </div>
-
-      {/* Чеклист закупок */}
-      <div className="p-4 rounded-lg border bg-card">
-        <h2 className="text-sm font-semibold mb-3">
-          Чеклист закупок ({project.purchases.filter((p) => p.isCompleted).length}/{project.purchases.length})
-        </h2>
-        <ProjectTaskList
-          tasks={project.purchases.map((p) => ({
-            ...p,
-            completedBy: null,
-            completedAt: null,
-            taskType: "purchase",
-          }))}
-          projectId={project.id}
-          canEdit={canEdit}
-          type="purchase"
-        />
-      </div>
-
       {/* Изображения */}
-      {canEdit && <ProjectImageUpload projectId={project.id} />}
-
-      {(hallImages.length > 0 || ceremonyImages.length > 0 || productionImages.length > 0) && (
-        <div className="space-y-4">
-          {hallImages.length > 0 && (
-            <div className="p-4 rounded-lg border bg-card">
-              <h2 className="text-sm font-semibold mb-3">Рисунок зала</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {hallImages.map((img) => (
-                  <div key={img.id} className="relative group">
-                    <a
-                      href={`/api/files/${img.filePath}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
-                    >
-                      <img
-                        src={`/api/files/${img.filePath}`}
-                        alt={img.fileName}
-                        className="w-full h-full object-cover"
-                      />
-                    </a>
-                    {canEdit && (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ProjectImageDelete projectId={project.id} imageId={img.id} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+      <div className="space-y-4">
+        {/* Рисунок зала */}
+        <div className="p-4 rounded-lg border bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold">Рисунок зала</h2>
+            {canEdit && <ProjectImageUpload projectId={project.id} imageType="hall" />}
+          </div>
+          {hallImages.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {hallImages.map((img) => (
+                <div key={img.id} className="relative group">
+                  <a href={`/api/files/${img.filePath}`} target="_blank" rel="noopener noreferrer"
+                    className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity">
+                    <img src={`/api/files/${img.filePath}`} alt={img.fileName} className="w-full h-full object-cover" />
+                  </a>
+                  {canEdit && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ProjectImageDelete projectId={project.id} imageId={img.id} />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
-
-          {ceremonyImages.length > 0 && (
-            <div className="p-4 rounded-lg border bg-card">
-              <h2 className="text-sm font-semibold mb-3">Рисунок церемонии</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {ceremonyImages.map((img) => (
-                  <div key={img.id} className="relative group">
-                    <a
-                      href={`/api/files/${img.filePath}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
-                    >
-                      <img
-                        src={`/api/files/${img.filePath}`}
-                        alt={img.fileName}
-                        className="w-full h-full object-cover"
-                      />
-                    </a>
-                    {canEdit && (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ProjectImageDelete projectId={project.id} imageId={img.id} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {productionImages.length > 0 && (
-            <div className="p-4 rounded-lg border bg-card">
-              <h2 className="text-sm font-semibold mb-3">Фото производства</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {productionImages.map((img) => (
-                  <div key={img.id} className="relative group">
-                    <a
-                      href={`/api/files/${img.filePath}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
-                    >
-                      <img
-                        src={`/api/files/${img.filePath}`}
-                        alt={img.fileName}
-                        className="w-full h-full object-cover"
-                      />
-                    </a>
-                    {canEdit && (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ProjectImageDelete projectId={project.id} imageId={img.id} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Нет изображений</p>
           )}
         </div>
-      )}
+
+        {/* Рисунок церемонии */}
+        <div className="p-4 rounded-lg border bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold">Рисунок церемонии</h2>
+            {canEdit && <ProjectImageUpload projectId={project.id} imageType="ceremony" />}
+          </div>
+          {ceremonyImages.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {ceremonyImages.map((img) => (
+                <div key={img.id} className="relative group">
+                  <a href={`/api/files/${img.filePath}`} target="_blank" rel="noopener noreferrer"
+                    className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity">
+                    <img src={`/api/files/${img.filePath}`} alt={img.fileName} className="w-full h-full object-cover" />
+                  </a>
+                  {canEdit && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ProjectImageDelete projectId={project.id} imageId={img.id} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Нет изображений</p>
+          )}
+        </div>
+
+        {/* Фото производства */}
+        <div className="p-4 rounded-lg border bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold">Фото производства</h2>
+            {canEdit && <ProjectImageUpload projectId={project.id} imageType="production" />}
+          </div>
+          {productionImages.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {productionImages.map((img) => (
+                <div key={img.id} className="relative group">
+                  <a href={`/api/files/${img.filePath}`} target="_blank" rel="noopener noreferrer"
+                    className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity">
+                    <img src={`/api/files/${img.filePath}`} alt={img.fileName} className="w-full h-full object-cover" />
+                  </a>
+                  {canEdit && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ProjectImageDelete projectId={project.id} imageId={img.id} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Нет изображений</p>
+          )}
+        </div>
+      </div>
 
       {/* Чат проекта */}
       <div className="p-4 rounded-lg border bg-card">

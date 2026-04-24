@@ -5,10 +5,24 @@ import { useRouter } from "next/navigation";
 import { Upload, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 
-export function ProjectImageUpload({ projectId }: { projectId: string }) {
+const IMAGE_TYPE_LABELS: Record<string, string> = {
+  hall: "Рисунок зала",
+  ceremony: "Рисунок церемонии",
+  production: "Фото производства",
+};
+
+export function ProjectImageUpload({
+  projectId,
+  imageType: fixedImageType,
+}: {
+  projectId: string;
+  imageType?: "hall" | "ceremony" | "production";
+}) {
   const router = useRouter();
   const [showUpload, setShowUpload] = useState(false);
-  const [imageType, setImageType] = useState<"hall" | "ceremony" | "production">("hall");
+  const [imageType, setImageType] = useState<"hall" | "ceremony" | "production">(
+    fixedImageType ?? "hall"
+  );
 
   const handleUpload = async (files: File[]) => {
     for (const file of files) {
@@ -31,25 +45,29 @@ export function ProjectImageUpload({ projectId }: { projectId: string }) {
         className="inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded-md hover:bg-accent transition-colors"
       >
         <Upload className="h-3.5 w-3.5" />
-        Загрузить фото
+        Добавить
       </button>
 
       {showUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 className="font-semibold mb-4">Загрузить фотографию</h3>
-            <div className="mb-4">
-              <label className="text-xs text-muted-foreground">Тип</label>
-              <select
-                value={imageType}
-                onChange={(e) => setImageType(e.target.value as typeof imageType)}
-                className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
-              >
-                <option value="hall">Рисунок зала</option>
-                <option value="ceremony">Рисунок церемонии</option>
-                <option value="production">Фото производства</option>
-              </select>
-            </div>
+            <h3 className="font-semibold mb-4">
+              {fixedImageType ? IMAGE_TYPE_LABELS[fixedImageType] : "Загрузить фотографию"}
+            </h3>
+            {!fixedImageType && (
+              <div className="mb-4">
+                <label className="text-xs text-muted-foreground">Тип</label>
+                <select
+                  value={imageType}
+                  onChange={(e) => setImageType(e.target.value as typeof imageType)}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                >
+                  <option value="hall">Рисунок зала</option>
+                  <option value="ceremony">Рисунок церемонии</option>
+                  <option value="production">Фото производства</option>
+                </select>
+              </div>
+            )}
             <FileUpload
               onUpload={handleUpload}
               accept=".jpg,.jpeg,.png,.webp"

@@ -99,6 +99,16 @@ export function AddCategoryButton({ categories }: { categories: Category[] }) {
   );
 }
 
+async function uploadPhoto(file: File): Promise<string | undefined> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("dir", "inventory");
+  const res = await fetch("/api/upload", { method: "POST", body: form });
+  if (!res.ok) return undefined;
+  const json = await res.json();
+  return json.data?.filePath;
+}
+
 export function AddItemButton({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [show, setShow] = useState(false);
@@ -108,9 +118,9 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
     color: "",
     quantity: "0",
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Flatten categories for selector
   const flatCats: { id: string; name: string }[] = [];
   for (const c of categories) {
     flatCats.push({ id: c.id, name: c.name });
@@ -124,6 +134,8 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
   const handleSave = async () => {
     if (!form.name.trim() || !form.categoryId) return;
     setLoading(true);
+    let photoUrl: string | undefined;
+    if (photoFile) photoUrl = await uploadPhoto(photoFile);
     await fetch("/api/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -132,11 +144,13 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
         name: form.name.trim(),
         color: form.color || undefined,
         quantity: Number(form.quantity) || 0,
+        photoUrl,
       }),
     });
     setLoading(false);
     setShow(false);
     setForm({ categoryId: "", name: "", color: "", quantity: "0" });
+    setPhotoFile(null);
     router.refresh();
   };
 
@@ -202,6 +216,18 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
                   />
                 </div>
               </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Фото</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                  className="w-full mt-1 text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:text-xs file:bg-background file:hover:bg-accent file:cursor-pointer"
+                />
+                {photoFile && (
+                  <p className="text-xs text-muted-foreground mt-1">{photoFile.name}</p>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <button onClick={() => setShow(false)} className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors">
@@ -222,7 +248,7 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
   );
 }
 
-export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null } }) {
+export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null } }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -233,9 +259,12 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
     status: item.status ?? "active",
     comment: item.comment ?? "",
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const handleSave = async () => {
     setLoading(true);
+    let photoUrl: string | undefined;
+    if (photoFile) photoUrl = await uploadPhoto(photoFile);
     await fetch("/api/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -246,10 +275,12 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
         quantity: Number(form.quantity),
         status: form.status,
         comment: form.comment || undefined,
+        ...(photoUrl !== undefined && { photoUrl }),
       }),
     });
     setLoading(false);
     setEditing(false);
+    setPhotoFile(null);
     router.refresh();
   };
 
@@ -320,6 +351,21 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
                   rows={2}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background resize-none focus:ring-1 focus:ring-ring outline-none"
                 />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Фото</label>
+                {item.photoUrl && !photoFile && (
+                  <img src={`/api/files/${item.photoUrl}`} alt="фото" className="w-16 h-16 object-cover rounded-md border mb-1 mt-1" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                  className="w-full mt-1 text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:text-xs file:bg-background file:hover:bg-accent file:cursor-pointer"
+                />
+                {photoFile && (
+                  <p className="text-xs text-muted-foreground mt-1">{photoFile.name}</p>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2">
