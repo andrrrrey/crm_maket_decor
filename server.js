@@ -4,6 +4,20 @@ const next = require("next");
 const { Server } = require("socket.io");
 const { createAdapter } = require("@socket.io/redis-adapter");
 const { createClient } = require("redis");
+const { execFileSync } = require("child_process");
+
+// Синхронизировать схему БД перед стартом
+try {
+  console.log("> Applying database schema (prisma db push)...");
+  execFileSync(
+    "node",
+    ["node_modules/.bin/prisma", "db", "push", "--skip-generate"],
+    { stdio: "inherit", env: process.env }
+  );
+  console.log("> Database schema is up to date");
+} catch (err) {
+  console.error("> prisma db push failed:", err.message);
+}
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
