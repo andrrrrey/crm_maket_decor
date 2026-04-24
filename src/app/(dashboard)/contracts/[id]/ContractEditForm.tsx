@@ -6,6 +6,7 @@ import { MOCKUP_STATUS_LABELS } from "@/lib/constants";
 import type { ContractMockupStatus } from "@/types";
 import { Pencil, X, Save, ChevronDown, Upload, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 interface ContractData {
   id: string;
@@ -283,8 +284,8 @@ export function ContractDeleteButton({
   userId: string;
   userRole: string;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   const canDelete =
     userRole === "DIRECTOR" ||
@@ -293,23 +294,33 @@ export function ContractDeleteButton({
   if (!canDelete) return null;
 
   const handleDelete = async () => {
-    if (!confirm("Удалить договор? Это действие необратимо.")) return;
     setLoading(true);
     await fetch(`/api/contracts/${contractId}`, { method: "DELETE" });
     setLoading(false);
-    router.refresh();
-    router.push("/contracts");
+    setShowDialog(false);
+    window.location.href = "/contracts";
   };
 
   return (
-    <button
-      onClick={handleDelete}
-      disabled={loading}
-      className="p-2 rounded-md hover:bg-accent transition-colors text-destructive"
-      title="Удалить договор"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
+    <>
+      <button
+        onClick={() => setShowDialog(true)}
+        disabled={loading}
+        className="p-2 rounded-md hover:bg-accent transition-colors text-destructive"
+        title="Удалить договор"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+      <ConfirmDialog
+        open={showDialog}
+        title="Удалить договор?"
+        description="Это действие необратимо. Договор, связанный проект и все файлы будут удалены."
+        confirmLabel="Удалить"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDialog(false)}
+        loading={loading}
+      />
+    </>
   );
 }
 

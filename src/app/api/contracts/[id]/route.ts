@@ -120,11 +120,27 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const existing = await prisma.contract.findUnique({ where: { id: params.id } });
+  const existing = await prisma.contract.findUnique({
+    where: { id: params.id },
+    include: { project: { select: { id: true } } },
+  });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (user.role === "MANAGER" && existing.managerId !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Delete the linked project first (no cascade on Project → Contract)
+  if (existing.project) {
+    await prisma.project.delete({ where: { id: existing.project.id } });
+  }
+
+  // Reset source client status from CONTRACT → ESTIMATE so it re-appears in the funnel
+  if (existing.sourceClientId) {
+    await prisma.client.update({
+      where: { id: existing.sourceClientId },
+      data: { status: "ESTIMATE" },
+    });
   }
 
   await prisma.contract.delete({ where: { id: params.id } });
