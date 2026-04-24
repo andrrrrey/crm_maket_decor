@@ -9,6 +9,7 @@ const createItemSchema = z.object({
   name: z.string().min(1),
   color: z.string().optional(),
   quantity: z.number().default(0),
+  photoUrl: z.string().optional(),
 });
 
 const updateItemSchema = z.object({
@@ -18,6 +19,7 @@ const updateItemSchema = z.object({
   quantity: z.number().optional(),
   status: z.string().optional(),
   comment: z.string().optional(),
+  photoUrl: z.string().optional(),
   damageQuantity: z.number().optional(),
   damageDescription: z.string().optional(),
 });
@@ -87,6 +89,7 @@ export async function POST(req: NextRequest) {
         ...(data.quantity !== undefined && { quantity: data.quantity }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.comment !== undefined && { comment: data.comment }),
+        ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
       },
     });
     await logAction(user.id, Actions.INVENTORY_UPDATE, "inventory", data.id);
@@ -105,6 +108,7 @@ export async function POST(req: NextRequest) {
       name: parsed.data.name,
       color: parsed.data.color,
       quantity: parsed.data.quantity,
+      photoUrl: parsed.data.photoUrl,
     },
   });
   await logAction(user.id, Actions.INVENTORY_CREATE, "inventory", item.id, { name: item.name });

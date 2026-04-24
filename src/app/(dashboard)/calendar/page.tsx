@@ -2,27 +2,43 @@ export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { HorizontalCalendar } from "@/components/calendar/HorizontalCalendar";
+import { MonthCalendar } from "@/components/calendar/HorizontalCalendar";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { format, addMonths, subMonths } from "date-fns";
+import { ru } from "date-fns/locale";
 
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: { year?: string };
+  searchParams: { month?: string };
 }) {
-  const currentYear = new Date().getFullYear();
-  const year = parseInt(searchParams.year ?? String(currentYear));
-
-  const startDate = new Date(year, 0, 1);
-  const endDate = new Date(year + 1, 0, 1);
-
   const session = await auth();
   const user = session?.user as any;
 
+  // Parse month param (YYYY-MM), default to current month
+  let year: number;
+  let month: number;
+  if (searchParams.month && /^\d{4}-\d{2}$/.test(searchParams.month)) {
+    [year, month] = searchParams.month.split("-").map(Number);
+  } else {
+    const now = new Date();
+    year = now.getFullYear();
+    month = now.getMonth() + 1;
+  }
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+
+  const prevMonth = subMonths(startDate, 1);
+  const nextMonth = addMonths(startDate, 1);
+
+  const managerFilter =
+    user.role === "MANAGER" ? { managerId: user.id } : {};
+
   const [projects, calendarEntries] = await Promise.all([
     prisma.project.findMany({
-      where: { date: { gte: startDate, lt: endDate } },
+      where: { date: { gte: startDate, lt: endDate }, ...managerFilter },
       select: {
         id: true,
         number: true,
@@ -34,6 +50,7 @@ export default async function CalendarPage({
         month: true,
         isCompleted: true,
         manager: { select: { id: true, name: true } },
+        contract: { select: { clientName: true } },
         projectImages: {
           select: { id: true, filePath: true, imageType: true },
         },
@@ -46,21 +63,28 @@ export default async function CalendarPage({
     }),
   ]);
 
+  const monthLabel = format(startDate, "LLLL yyyy", { locale: ru });
+
   return (
     <div className="space-y-4">
-      {/* Заголовок с навигацией по годам */}
+      {/* Header with month navigation */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Календарь {year}</h1>
+        <h1 className="text-2xl font-bold capitalize">{monthLabel}</h1>
         <div className="flex items-center gap-2">
           <Link
-            href={`/calendar?year=${year - 1}`}
+            href={`/calendar?month=${format(prevMonth, "yyyy-MM")}`}
             className="p-2 rounded-md hover:bg-accent transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
-          <span className="text-sm font-medium px-2">{year}</span>
           <Link
-            href={`/calendar?year=${year + 1}`}
+            href={`/calendar?month=${format(new Date(), "yyyy-MM")}`}
+            className="px-3 py-1.5 text-sm rounded-md hover:bg-accent transition-colors border"
+          >
+            Сегодня
+          </Link>
+          <Link
+            href={`/calendar?month=${format(nextMonth, "yyyy-MM")}`}
             className="p-2 rounded-md hover:bg-accent transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
@@ -68,7 +92,7 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      {/* Легенда */}
+      {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-orange-400" />
@@ -84,9 +108,10 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      {/* Горизонтальный скролл по месяцам */}
-      <HorizontalCalendar
+      {/* Full month calendar */}
+      <MonthCalendar
         year={year}
+        month={month}
         projects={projects.map((p) => ({
           ...p,
           date: p.date.toISOString(),

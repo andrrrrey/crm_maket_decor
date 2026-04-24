@@ -5,9 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { StatsCards } from "@/components/stats/StatsCards";
 import { ROLE_LABELS, CLIENT_STATUS_LABELS } from "@/lib/constants";
 import type { Role } from "@/types";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { DashboardTaskWidget } from "./DashboardTaskWidget";
+import { DashboardProjectTasks, DashboardManagerTasks } from "./DashboardTasks";
 import { ManagerFilter } from "@/components/filters/ManagerFilter";
 
 async function getStats(userId: string, role: string) {
@@ -224,28 +223,7 @@ export default async function DashboardPage({
             <h2 className="text-sm font-semibold mb-3">
               Задачи по проектам ({projectTasks.length})
             </h2>
-            <div className="space-y-1.5 max-h-64 overflow-y-auto">
-              {projectTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Нет активных задач</p>
-              ) : (
-                projectTasks.map((task) => (
-                  <div key={task.id} className="flex items-center gap-2 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="truncate">{task.title}</span>
-                      <span className="text-xs text-muted-foreground ml-1">
-                        — {task.project.venue ?? `Проект #${task.project.number}`}
-                      </span>
-                    </div>
-                    {isDirector && (
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {task.project.manager.name}
-                      </span>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+            <DashboardProjectTasks tasks={projectTasks} isDirector={isDirector} />
           </div>
 
           {/* Личные задачи + создание */}
@@ -253,29 +231,8 @@ export default async function DashboardPage({
             <h2 className="text-sm font-semibold mb-3">
               Личные задачи ({managerTasks.length})
             </h2>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto mb-3">
-              {managerTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Нет активных задач</p>
-              ) : (
-                managerTasks.map((task) => (
-                  <div key={task.id} className="flex items-center gap-2 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="truncate">{task.title}</span>
-                      {task.dueDate && (
-                        <span className="text-xs text-muted-foreground ml-1">
-                          · до {format(new Date(task.dueDate), "dd.MM", { locale: ru })}
-                        </span>
-                      )}
-                    </div>
-                    {isDirector && (
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {task.user.name}
-                      </span>
-                    )}
-                  </div>
-                ))
-              )}
+            <div className="mb-3">
+              <DashboardManagerTasks tasks={managerTasks} isDirector={isDirector} />
             </div>
             <DashboardTaskWidget />
           </div>

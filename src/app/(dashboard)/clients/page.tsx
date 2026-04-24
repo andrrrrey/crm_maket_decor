@@ -24,8 +24,10 @@ export default async function ClientsPage({
     where.status = { not: "CONTRACT" };
   }
 
-  // Менеджер видит всех, DIRECTOR может фильтровать по менеджеру
-  if (user.role === "DIRECTOR" && searchParams.managerId) {
+  // Менеджер видит только своих клиентов; DIRECTOR видит всех (с опциональным фильтром)
+  if (user.role === "MANAGER") {
+    where.managerId = user.id;
+  } else if (user.role === "DIRECTOR" && searchParams.managerId) {
     where.managerId = searchParams.managerId;
   }
 
