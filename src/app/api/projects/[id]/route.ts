@@ -119,6 +119,37 @@ export async function PUT(
   return NextResponse.json({ data: updated });
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = session.user as any;
+  const body = await req.json();
+
+  const patchSchema = z.object({
+    projectStatus: z.string().optional(),
+    fabricNote: z.string().optional(),
+  });
+
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const updated = await prisma.project.update({
+    where: { id: params.id },
+    data: {
+      ...(parsed.data.projectStatus !== undefined && { projectStatus: parsed.data.projectStatus }),
+      ...(parsed.data.fabricNote !== undefined && { fabricNote: parsed.data.fabricNote }),
+    },
+  });
+
+  return NextResponse.json({ data: updated });
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }

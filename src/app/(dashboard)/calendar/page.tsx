@@ -1,11 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { YearCalendar } from "@/components/calendar/YearCalendar";
-import { AddCalendarEntryButton, DeleteCalendarEntryButton } from "./CalendarActions";
+import { HorizontalCalendar } from "@/components/calendar/HorizontalCalendar";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 
 export default async function CalendarPage({
   searchParams,
@@ -20,7 +19,6 @@ export default async function CalendarPage({
 
   const session = await auth();
   const user = session?.user as any;
-  const isDirector = user?.role === "DIRECTOR";
 
   const [projects, calendarEntries] = await Promise.all([
     prisma.project.findMany({
@@ -30,10 +28,15 @@ export default async function CalendarPage({
         number: true,
         date: true,
         venue: true,
+        description: true,
         calendarColor: true,
+        projectStatus: true,
         month: true,
         isCompleted: true,
         manager: { select: { id: true, name: true } },
+        projectImages: {
+          select: { id: true, filePath: true, imageType: true },
+        },
       },
       orderBy: { date: "asc" },
     }),
@@ -65,48 +68,24 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      {/* Легенда + добавление */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-orange-400" />
-            Монтаж
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-blue-400" />
-            Демонтаж
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-green-400" />
-            Бронь
-          </div>
+      {/* Легенда */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-orange-400" />
+          Монтаж
         </div>
-        {isDirector && <AddCalendarEntryButton />}
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-blue-400" />
+          Демонтаж
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-green-400" />
+          Бронь
+        </div>
       </div>
 
-      {/* Записи календаря */}
-      {isDirector && calendarEntries.length > 0 && (
-        <div className="p-4 rounded-lg border bg-card">
-          <h2 className="text-sm font-semibold mb-2">Записи ({calendarEntries.length})</h2>
-          <div className="space-y-1">
-            {calendarEntries.map((entry) => (
-              <div key={entry.id} className="flex items-center gap-2 text-sm">
-                <div
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: entry.color }}
-                />
-                <span className="text-muted-foreground text-xs">
-                  {format(new Date(entry.date), "dd.MM.yyyy", { locale: ru })}
-                </span>
-                <span className="flex-1 truncate">{entry.label}</span>
-                <DeleteCalendarEntryButton entryId={entry.id} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <YearCalendar
+      {/* Горизонтальный скролл по месяцам */}
+      <HorizontalCalendar
         year={year}
         projects={projects.map((p) => ({
           ...p,

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ContractsTable } from "@/components/tables/ContractsTable";
@@ -18,6 +20,11 @@ export default async function ContractsPage() {
     include: {
       manager: { select: { id: true, name: true } },
       sourceClient: { select: { id: true, clientName: true } },
+      mockupImages: {
+        select: { id: true, filePath: true, fileName: true },
+        orderBy: { uploadedAt: "asc" },
+        take: 1,
+      },
     },
     orderBy: { installDate: "asc" },
   });

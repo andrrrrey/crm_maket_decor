@@ -222,7 +222,7 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
   );
 }
 
-export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number } }) {
+export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null } }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -230,6 +230,8 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
     name: item.name,
     color: item.color ?? "",
     quantity: item.quantity.toString(),
+    status: item.status ?? "active",
+    comment: item.comment ?? "",
   });
 
   const handleSave = async () => {
@@ -242,6 +244,8 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
         name: form.name,
         color: form.color || undefined,
         quantity: Number(form.quantity),
+        status: form.status,
+        comment: form.comment || undefined,
       }),
     });
     setLoading(false);
@@ -295,6 +299,27 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
                     className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Статус</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                >
+                  <option value="active">Активен</option>
+                  <option value="in_use">В использовании</option>
+                  <option value="damaged">Повреждён</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Комментарий</label>
+                <textarea
+                  value={form.comment}
+                  onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                  rows={2}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background resize-none focus:ring-1 focus:ring-ring outline-none"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2">

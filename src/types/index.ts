@@ -13,6 +13,7 @@ import type {
   Message,
   MailEntry,
   Mockup,
+  MockupImage,
 } from "@prisma/client";
 
 export type { User, Client, Contract, Project };
@@ -91,6 +92,7 @@ export type ContractWithManager = Contract & {
   organizerName?: string | null;
   manager: Pick<User, "id" | "name">;
   sourceClient?: Pick<Client, "id" | "clientName"> | null;
+  mockupImages?: Pick<MockupImage, "id" | "filePath" | "fileName">[];
 };
 
 // Проект с менеджером

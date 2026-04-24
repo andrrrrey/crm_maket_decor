@@ -5,6 +5,7 @@ import { logAction, Actions } from "@/lib/logger";
 import { z } from "zod";
 
 const createSchema = z.object({
+  name: z.string().optional(),
   category: z.string().min(1),
   companyName: z.string().min(1),
   address: z.string().optional(),

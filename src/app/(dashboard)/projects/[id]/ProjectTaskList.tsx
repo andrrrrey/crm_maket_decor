@@ -18,6 +18,7 @@ interface ProjectTaskListProps {
   projectId: string;
   canEdit: boolean;
   type?: "task" | "purchase";
+  taskType?: string;
 }
 
 export function ProjectTaskList({
@@ -25,6 +26,7 @@ export function ProjectTaskList({
   projectId,
   canEdit,
   type = "task",
+  taskType,
 }: ProjectTaskListProps) {
   const router = useRouter();
   const [newTitle, setNewTitle] = useState("");
@@ -55,10 +57,12 @@ export function ProjectTaskList({
   const addTask = async () => {
     if (!newTitle.trim()) return;
     setAdding(true);
+    const body: Record<string, unknown> = { title: newTitle.trim() };
+    if (taskType) body.taskType = taskType;
     await fetch(apiBase, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTitle.trim() }),
+      body: JSON.stringify(body),
     });
     setNewTitle("");
     setAdding(false);
