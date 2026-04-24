@@ -120,6 +120,7 @@ export default async function CalendarPage({
           ...e,
           date: e.date.toISOString(),
         }))}
+        canDelete={user.role === "DIRECTOR"}
       />
     </div>
   );

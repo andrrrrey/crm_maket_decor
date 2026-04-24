@@ -12,6 +12,9 @@ import {
 import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
@@ -54,6 +57,7 @@ interface MonthCalendarProps {
   month: number;
   projects: CalendarProject[];
   calendarEntries: CalendarEntry[];
+  canDelete?: boolean;
 }
 
 function projectLabel(p: CalendarProject): string {
@@ -61,7 +65,21 @@ function projectLabel(p: CalendarProject): string {
   return parts.length > 0 ? parts.join(" · ") : `Проект #${p.number}`;
 }
 
-export function MonthCalendar({ year, month, projects, calendarEntries }: MonthCalendarProps) {
+export function MonthCalendar({ year, month, projects, calendarEntries, canDelete }: MonthCalendarProps) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteEntry = async (id: string) => {
+    setDeletingId(id);
+    await fetch("/api/calendar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deleteId: id }),
+    });
+    setDeletingId(null);
+    router.refresh();
+  };
+
   const monthStart = new Date(year, month - 1, 1);
   const monthEnd = endOfMonth(monthStart);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -147,11 +165,21 @@ export function MonthCalendar({ year, month, projects, calendarEntries }: MonthC
                 {dayEntries.map((e) => (
                   <div
                     key={e.id}
-                    className="block rounded px-1.5 py-0.5 text-xs truncate"
+                    className="group flex items-center rounded px-1.5 py-0.5 text-xs gap-0.5"
                     style={{ backgroundColor: e.color + "33", color: e.color, border: `1px solid ${e.color}66` }}
                     title={e.label}
                   >
-                    {e.label}
+                    <span className="truncate flex-1">{e.label}</span>
+                    {canDelete && (
+                      <button
+                        onClick={() => deleteEntry(e.id)}
+                        disabled={deletingId === e.id}
+                        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 disabled:opacity-50"
+                        title="Удалить"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
