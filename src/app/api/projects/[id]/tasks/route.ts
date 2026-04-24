@@ -7,6 +7,7 @@ import { z } from "zod";
 const createTaskSchema = z.object({
   title: z.string().min(1),
   sortOrder: z.number().optional(),
+  taskType: z.string().optional(),
 });
 
 const updateTaskSchema = z.object({
@@ -62,6 +63,7 @@ export async function POST(
       projectId: params.id,
       title: parsed.data.title,
       sortOrder: parsed.data.sortOrder ?? count,
+      taskType: parsed.data.taskType ?? "task",
     },
   });
 

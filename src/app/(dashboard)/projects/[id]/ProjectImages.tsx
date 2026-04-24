@@ -8,7 +8,7 @@ import { FileUpload } from "@/components/files/FileUpload";
 export function ProjectImageUpload({ projectId }: { projectId: string }) {
   const router = useRouter();
   const [showUpload, setShowUpload] = useState(false);
-  const [imageType, setImageType] = useState<"order" | "production">("order");
+  const [imageType, setImageType] = useState<"hall" | "ceremony" | "production">("hall");
 
   const handleUpload = async (files: File[]) => {
     for (const file of files) {
@@ -45,7 +45,8 @@ export function ProjectImageUpload({ projectId }: { projectId: string }) {
                 onChange={(e) => setImageType(e.target.value as typeof imageType)}
                 className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
               >
-                <option value="order">Эскизы заказа</option>
+                <option value="hall">Рисунок зала</option>
+                <option value="ceremony">Рисунок церемонии</option>
                 <option value="production">Фото производства</option>
               </select>
             </div>
