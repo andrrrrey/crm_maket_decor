@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, ArrowRight, X, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 interface ClientActionsProps {
   client: {
@@ -20,6 +21,7 @@ interface ClientActionsProps {
 export function ClientActions({ client, userId, userRole }: ClientActionsProps) {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showUpload, setShowUpload] = useState(false);
@@ -31,16 +33,14 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
     (userRole === "MANAGER" && client.managerId === userId);
 
   const handleDelete = async () => {
-    if (!confirm(`Удалить клиента? Это действие необратимо.`)) return;
     setLoading(true);
     await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
     setLoading(false);
-    router.refresh();
-    router.push("/clients");
+    setShowDeleteDialog(false);
+    window.location.href = "/clients";
   };
 
   const handleConvert = async () => {
-    if (!confirm("Перевести клиента в договор?")) return;
     setLoading(true);
     const res = await fetch(`/api/clients/${client.id}/convert`, {
       method: "POST",
@@ -122,7 +122,7 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
           )}
           {canDelete && (
             <button
-              onClick={() => { handleDelete(); setShowMenu(false); }}
+              onClick={() => { setShowDeleteDialog(true); setShowMenu(false); }}
               className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors flex items-center gap-2"
               disabled={loading}
             >
@@ -132,6 +132,16 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Удалить клиента?"
+        description="Это действие необратимо. Клиент и все связанные данные будут удалены."
+        confirmLabel="Удалить"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        loading={loading}
+      />
 
       {/* Диалог загрузки */}
       {showUpload && (

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, X, Loader2, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { format } from "date-fns";
 import { CALENDAR_COLORS, ROLE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -47,8 +48,8 @@ export function ProjectDeleteButton({
   userId: string;
   userRole: string;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   const canDelete =
     userRole === "DIRECTOR" ||
@@ -57,24 +58,34 @@ export function ProjectDeleteButton({
   if (!canDelete) return null;
 
   const handleDelete = async () => {
-    if (!confirm("Удалить проект? Это действие необратимо.")) return;
     setLoading(true);
     await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
     setLoading(false);
-    router.refresh();
-    router.push("/projects");
+    setShowDialog(false);
+    window.location.href = "/projects";
   };
 
   return (
-    <button
-      onClick={handleDelete}
-      disabled={loading}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors text-destructive"
-      title="Удалить проект"
-    >
-      <Trash2 className="h-3.5 w-3.5" />
-      Удалить
-    </button>
+    <>
+      <button
+        onClick={() => setShowDialog(true)}
+        disabled={loading}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background hover:bg-accent text-sm font-medium transition-colors text-destructive"
+        title="Удалить проект"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+        Удалить
+      </button>
+      <ConfirmDialog
+        open={showDialog}
+        title="Удалить проект?"
+        description="Это действие необратимо. Проект, все задачи и изображения будут удалены."
+        confirmLabel="Удалить"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDialog(false)}
+        loading={loading}
+      />
+    </>
   );
 }
 
