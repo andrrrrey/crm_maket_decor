@@ -35,6 +35,7 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
     setLoading(true);
     await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
     setLoading(false);
+    router.refresh();
     router.push("/clients");
   };
 

@@ -5,8 +5,17 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "./DataTable";
 import { MockupStatusBadge } from "@/components/shared/StatusBadge";
 import type { ContractWithManager } from "@/types";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
+
+function formatStringDate(val: string | null | undefined): string {
+  if (!val) return "—";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    const d = parseISO(val);
+    if (isValid(d)) return format(d, "dd.MM.yyyy", { locale: ru });
+  }
+  return val;
+}
 import Link from "next/link";
 import { X } from "lucide-react";
 
@@ -118,7 +127,7 @@ const columns: ColumnDef<ContractWithManager>[] = [
   {
     accessorKey: "prepaymentDate",
     header: "Дата предоплаты",
-    cell: ({ row }) => row.original.prepaymentDate ?? "—",
+    cell: ({ row }) => formatStringDate(row.original.prepaymentDate),
   },
   {
     accessorKey: "invoiceNumber",

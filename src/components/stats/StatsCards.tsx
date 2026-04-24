@@ -56,7 +56,9 @@ export function StatsCards({
               <Icon className={`h-4 w-4 ${card.color}`} />
               <span className="text-xs text-muted-foreground">{card.label}</span>
             </div>
-            <p className="text-2xl font-bold">{card.value}</p>
+            <p className="text-2xl font-bold">
+              {typeof card.value === "number" ? card.value.toLocaleString("ru-RU") : card.value}
+            </p>
           </div>
         );
       })}

@@ -142,10 +142,9 @@ export function ClientEditForm({ client }: { client: ClientData }) {
             <div>
               <label className="text-xs text-muted-foreground">Дата встречи</label>
               <input
-                type="text"
+                type="date"
                 value={form.meetingDate}
                 onChange={(e) => setForm({ ...form, meetingDate: e.target.value })}
-                placeholder="напр. 15.03.2026"
                 className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
               />
             </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAction, Actions } from "@/lib/logger";
+import { format } from "date-fns";
 
 export async function POST(
   req: NextRequest,
@@ -57,6 +58,19 @@ export async function POST(
       label,
       color: "#3B82F6",
       entryType: "contract",
+    },
+  });
+
+  // Create a project in RESERVATION status (green) linked to the contract
+  await prisma.project.create({
+    data: {
+      date: installDate,
+      venue: client.venue,
+      month: format(installDate, "yyyy-MM"),
+      calendarColor: "#34D399",
+      projectStatus: "RESERVATION",
+      managerId: client.managerId,
+      contractId: contract.id,
     },
   });
 

@@ -61,6 +61,7 @@ export function ProjectDeleteButton({
     setLoading(true);
     await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
     setLoading(false);
+    router.refresh();
     router.push("/projects");
   };
 

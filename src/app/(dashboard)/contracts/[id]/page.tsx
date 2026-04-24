@@ -3,8 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { MockupStatusBadge } from "@/components/shared/StatusBadge";
 import { FileListWithDelete } from "@/components/files/FileListWithDelete";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
+
+function formatStringDate(val: string | null | undefined): string {
+  if (!val) return "—";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    const d = parseISO(val);
+    if (isValid(d)) return format(d, "dd.MM.yyyy", { locale: ru });
+  }
+  return val;
+}
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { MockupStatusSelect, ContractEditForm, ContractDeleteButton, ContractFileUpload } from "./ContractEditForm";
@@ -176,7 +185,7 @@ export default async function ContractPage({
                 {contract.prepaymentAmount
                   ? `${Number(contract.prepaymentAmount).toLocaleString("ru-RU")} ₽`
                   : "—"}
-                {contract.prepaymentDate && ` (${contract.prepaymentDate})`}
+                {contract.prepaymentDate && ` (${formatStringDate(contract.prepaymentDate)})`}
               </dd>
             </div>
             <div className="flex justify-between">

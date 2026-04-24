@@ -4,8 +4,18 @@ import { notFound } from "next/navigation";
 import { ClientStatusBadge } from "@/components/shared/StatusBadge";
 import { EstimatesList } from "./EstimatesList";
 import { PROJECT_TYPE_LABELS } from "@/lib/constants";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
+
+function formatStringDate(val: string | null): string {
+  if (!val) return "—";
+  // Handle YYYY-MM-DD from date picker
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    const d = parseISO(val);
+    if (isValid(d)) return format(d, "dd.MM.yyyy", { locale: ru });
+  }
+  return val;
+}
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { ClientActions } from "./ClientActions";
@@ -152,7 +162,7 @@ export default async function ClientPage({
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Дата встречи</dt>
-              <dd>{client.meetingDate ?? "—"}</dd>
+              <dd>{formatStringDate(client.meetingDate)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Дата мероприятия</dt>
