@@ -67,7 +67,7 @@ export default function NewClientPage() {
 
       if (res.ok) {
         const json = await res.json();
-        router.push(`/clients/${json.data.id}`);
+        window.location.href = `/clients/${json.data.id}`;
         return;
       }
 

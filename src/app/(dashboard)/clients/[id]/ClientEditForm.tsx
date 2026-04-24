@@ -26,7 +26,7 @@ export function ClientStatusSelect({ client }: { client: ClientData }) {
 
   if (client.isRejected) return null;
 
-  const statuses: ClientStatus[] = ["MEETING", "DISCUSSION", "ESTIMATE", "CONTRACT"];
+  const statuses: ClientStatus[] = ["MEETING", "DISCUSSION", "ESTIMATE"];
 
   const handleChange = async (newStatus: string) => {
     if (newStatus === client.status) return;
@@ -45,7 +45,7 @@ export function ClientStatusSelect({ client }: { client: ClientData }) {
       <select
         value={client.status}
         onChange={(e) => handleChange(e.target.value)}
-        disabled={loading || client.status === "CONTRACT"}
+        disabled={loading}
         className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium rounded-full border cursor-pointer focus:ring-1 focus:ring-ring outline-none disabled:opacity-60 disabled:cursor-not-allowed bg-background transition-colors"
       >
         {statuses.map((s) => (

@@ -6,6 +6,7 @@ import { ContractsTable } from "@/components/tables/ContractsTable";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import type { ContractWithManager } from "@/types";
+import { AutoRefresh } from "@/components/shared/AutoRefresh";
 
 function fmt(n: number) {
   return n.toLocaleString("ru-RU");
@@ -53,6 +54,7 @@ export default async function ContractsPage() {
 
   return (
     <div className="space-y-6">
+      <AutoRefresh />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Договоры</h1>

@@ -8,6 +8,7 @@ import type { Role } from "@/types";
 import { DashboardTaskWidget } from "./DashboardTaskWidget";
 import { DashboardProjectTasks, DashboardManagerTasks } from "./DashboardTasks";
 import { ManagerFilter } from "@/components/filters/ManagerFilter";
+import { AutoRefresh } from "@/components/shared/AutoRefresh";
 
 async function getStats(userId: string, role: string) {
   const managerFilter = role === "MANAGER" ? { managerId: userId } : {};
@@ -20,7 +21,7 @@ async function getStats(userId: string, role: string) {
       prisma.client.count({ where: { ...managerFilter, isRejected: true } }),
       prisma.client.groupBy({
         by: ["status"],
-        where: managerFilter,
+        where: { ...managerFilter, isRejected: false, status: { not: "CONTRACT" } },
         _count: true,
       }),
     ]);
@@ -141,6 +142,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
+      <AutoRefresh />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">Добро пожаловать, {user?.name}!</h1>
