@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Search, Package, ChevronRight } from "lucide-react";
-import { EditItemButton, DamageButton, DeleteItemButton } from "./InventoryActions";
+import { EditItemButton, DamageButton, DeleteItemButton, DeleteCategoryButton } from "./InventoryActions";
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Активен",
@@ -114,28 +114,44 @@ export function InventoryClient({
           </button>
           {topCategories.map((cat) => (
             <div key={cat.id}>
-              <button
-                onClick={() => setSelectedCategoryId(cat.id)}
-                className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-center gap-2 ${
+              <div
+                className={`group flex items-center hover:bg-accent transition-colors ${
                   selectedCategoryId === cat.id ? "bg-accent font-medium" : ""
                 }`}
               >
-                <Package className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate">{cat.name}</span>
-              </button>
-              {cat.children.map((sub) => (
                 <button
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className="flex-1 text-left px-3 py-2 flex items-center gap-2 min-w-0"
+                >
+                  <Package className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">{cat.name}</span>
+                </button>
+                {canDelete && (
+                  <div className="pr-1">
+                    <DeleteCategoryButton category={cat} />
+                  </div>
+                )}
+              </div>
+              {cat.children.map((sub) => (
+                <div
                   key={sub.id}
-                  onClick={() => setSelectedCategoryId(sub.id)}
-                  className={`w-full text-left pl-7 pr-3 py-1.5 hover:bg-accent transition-colors flex items-center gap-2 text-muted-foreground ${
-                    selectedCategoryId === sub.id
-                      ? "bg-accent text-foreground font-medium"
-                      : ""
+                  className={`group flex items-center hover:bg-accent transition-colors text-muted-foreground ${
+                    selectedCategoryId === sub.id ? "bg-accent text-foreground font-medium" : ""
                   }`}
                 >
-                  <ChevronRight className="h-3 w-3 shrink-0" />
-                  <span className="truncate text-xs">{sub.name}</span>
-                </button>
+                  <button
+                    onClick={() => setSelectedCategoryId(sub.id)}
+                    className="flex-1 text-left pl-7 pr-3 py-1.5 flex items-center gap-2 min-w-0"
+                  >
+                    <ChevronRight className="h-3 w-3 shrink-0" />
+                    <span className="truncate text-xs">{sub.name}</span>
+                  </button>
+                  {canDelete && (
+                    <div className="pr-1">
+                      <DeleteCategoryButton category={sub} />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           ))}
