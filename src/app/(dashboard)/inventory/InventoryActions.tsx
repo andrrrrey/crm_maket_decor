@@ -495,6 +495,35 @@ export function DeleteItemButton({ item }: { item: { id: string; name: string } 
   );
 }
 
+export function DeleteCategoryButton({ category }: { category: { id: string; name: string } }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить категорию «${category.name}»? Это действие необратимо.`)) return;
+    setLoading(true);
+    const res = await fetch(`/api/inventory/categories?id=${category.id}`, { method: "DELETE" });
+    setLoading(false);
+    if (!res.ok) {
+      const json = await res.json();
+      alert(json.error ?? "Ошибка при удалении");
+      return;
+    }
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1 rounded hover:bg-accent transition-colors text-destructive shrink-0 opacity-0 group-hover:opacity-100"
+      title="Удалить категорию"
+    >
+      <Trash2 className="h-3 w-3" />
+    </button>
+  );
+}
+
 export function InventorySearch() {
   const router = useRouter();
   const [query, setQuery] = useState("");
