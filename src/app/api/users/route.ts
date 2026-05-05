@@ -215,7 +215,7 @@ export async function DELETE(req: NextRequest) {
       prisma.mockup.updateMany({ where: { designerId: id }, data: { designerId: reassignToId } }),
       prisma.managerTask.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
       prisma.expense.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
-      prisma.message.updateMany({ where: { senderId: id }, data: { senderId: reassignToId } }),
+      prisma.message.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
       prisma.projectMessage.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
       prisma.historyEntry.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
       prisma.notification.deleteMany({ where: { userId: id } }),
