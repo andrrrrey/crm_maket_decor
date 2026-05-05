@@ -37,6 +37,7 @@ async function getCategoriesWithItems() {
       status: item.status,
       comment: item.comment,
       categoryId: item.categoryId,
+      location: (item as any).location ?? null,
       totalDamages: item.damages.reduce((sum, d) => sum + d.quantity, 0),
     })),
   }));

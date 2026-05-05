@@ -40,7 +40,7 @@ export default async function SettingsPage() {
 
   const openMonths = (directorSettings?.openMonths as string[]) ?? [];
   const yearPlans = (directorSettings?.yearPlans as Record<string, number>) ?? {};
-  const managers = users.filter((u) => u.role === "MANAGER" && u.isActive);
+  const managers = users.filter((u) => (u.role === "MANAGER" || u.role === "DIRECTOR") && u.isActive);
 
   return (
     <div className="max-w-4xl space-y-8">
@@ -63,7 +63,7 @@ export default async function SettingsPage() {
       {isDirector && (
         <div className="p-4 rounded-lg border bg-card space-y-3">
           <div>
-            <h2 className="text-sm font-semibold">Годовой план менеджеров</h2>
+            <h2 className="text-sm font-semibold">Годовой план</h2>
             <p className="text-xs text-muted-foreground mt-1">
               Используется в разделе Договоры для отображения прогресса
             </p>

@@ -248,7 +248,7 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
   );
 }
 
-export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null } }) {
+export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null; location?: string | null; totalDamages?: number } }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -256,8 +256,10 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
     name: item.name,
     color: item.color ?? "",
     quantity: item.quantity.toString(),
-    status: item.status ?? "active",
+    status: item.status ?? "site",
     comment: item.comment ?? "",
+    location: item.location ?? "",
+    addLosses: "",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -275,6 +277,10 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
         quantity: Number(form.quantity),
         status: form.status,
         comment: form.comment || undefined,
+        location: form.location || undefined,
+        ...(form.addLosses && Number(form.addLosses) > 0 && {
+          damageQuantity: Number(form.addLosses),
+        }),
         ...(photoUrl !== undefined && { photoUrl }),
       }),
     });
@@ -296,7 +302,7 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-xl space-y-4">
+          <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Редактировать позицию</h3>
               <button onClick={() => setEditing(false)} className="p-1 hover:bg-accent rounded">
@@ -331,31 +337,58 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Статус</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                  >
+                    <option value="site">Сайт</option>
+                    <option value="studio">Студия</option>
+                    <option value="utyl">Утиль</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Расположение</label>
+                  <select
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                  >
+                    <option value="">—</option>
+                    <option value="studio">Студия</option>
+                    <option value="warehouse">Склад</option>
+                  </select>
+                </div>
+              </div>
               <div>
-                <label className="text-xs text-muted-foreground">Статус</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                <label className="text-xs text-muted-foreground">
+                  Добавить потери{item.totalDamages ? ` (текущие: ${item.totalDamages})` : ""}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.addLosses}
+                  onChange={(e) => setForm({ ...form, addLosses: e.target.value })}
+                  placeholder="0"
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
-                >
-                  <option value="active">Активен</option>
-                  <option value="in_use">В использовании</option>
-                  <option value="damaged">Повреждён</option>
-                </select>
+                />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Комментарий</label>
                 <textarea
                   value={form.comment}
                   onChange={(e) => setForm({ ...form, comment: e.target.value })}
-                  rows={2}
+                  rows={4}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background resize-none focus:ring-1 focus:ring-ring outline-none"
                 />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Фото</label>
                 {item.photoUrl && !photoFile && (
-                  <img src={`/api/files/${item.photoUrl}`} alt="фото" className="w-16 h-16 object-cover rounded-md border mb-1 mt-1" />
+                  <img src={`/api/files/${item.photoUrl}`} alt="фото" className="w-20 h-20 object-cover rounded-md border mb-1 mt-1" />
                 )}
                 <input
                   type="file"
@@ -375,6 +408,73 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
               <button
                 onClick={handleSave}
                 disabled={loading || !form.name.trim()}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function EditCategoryButton({ category }: { category: { id: string; name: string } }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(category.name);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setLoading(true);
+    await fetch("/api/inventory/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: category.id, name: name.trim() }),
+    });
+    setLoading(false);
+    setEditing(false);
+    router.refresh();
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setEditing(true)}
+        className="p-1 rounded hover:bg-accent transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+        title="Переименовать категорию"
+      >
+        <Pencil className="h-3 w-3 text-muted-foreground" />
+      </button>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Переименовать категорию</h3>
+              <button onClick={() => setEditing(false)} className="p-1 hover:bg-accent rounded">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Название</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors">
+                Отмена
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={loading || !name.trim()}
                 className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
               >
                 <Save className="h-3.5 w-3.5" />

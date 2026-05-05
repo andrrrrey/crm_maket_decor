@@ -52,9 +52,11 @@ const TABS = ["CORE_TEAM", "FREELANCE_MALE", "FREELANCE_FEMALE", "DRIVERS", "CON
 function StaffTable({
   staff,
   isDirector,
+  section,
 }: {
   staff: Staff[];
   isDirector: boolean;
+  section: string;
 }) {
   const [search, setSearch] = useState("");
 
@@ -82,7 +84,7 @@ function StaffTable({
         />
       </div>
 
-      {isDirector && <AddStaffButton />}
+      {isDirector && <AddStaffButton initialSection={section} />}
 
       <div className="border rounded-lg overflow-x-auto">
         <table className="w-full text-sm min-w-[800px]">
@@ -274,6 +276,7 @@ export function InfoTabs({
         <StaffTable
           staff={staffBySection[activeTab] ?? []}
           isDirector={isDirector}
+          section={activeTab}
         />
       )}
     </div>

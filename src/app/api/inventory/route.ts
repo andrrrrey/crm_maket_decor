@@ -20,6 +20,7 @@ const updateItemSchema = z.object({
   status: z.string().optional(),
   comment: z.string().optional(),
   photoUrl: z.string().optional(),
+  location: z.string().optional(),
   damageQuantity: z.number().optional(),
   damageDescription: z.string().optional(),
 });
@@ -90,8 +91,9 @@ export async function POST(req: NextRequest) {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.comment !== undefined && { comment: data.comment }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
+        ...(data.location !== undefined && { location: data.location } as any),
       },
-    });
+    } as any);
     await logAction(user.id, Actions.INVENTORY_UPDATE, "inventory", data.id);
     return NextResponse.json({ data: item });
   }

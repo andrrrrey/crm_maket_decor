@@ -12,12 +12,12 @@ const labelClass = "text-xs text-muted-foreground";
 
 // ==================== STAFF ====================
 
-export function AddStaffButton() {
+export function AddStaffButton({ initialSection = "CORE_TEAM" }: { initialSection?: string }) {
   const router = useRouter();
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    section: "CORE_TEAM" as string,
+    section: initialSection as string,
     fullName: "",
     position: "",
     phone: "",
@@ -52,7 +52,7 @@ export function AddStaffButton() {
     });
     setLoading(false);
     setShow(false);
-    setForm({ section: "CORE_TEAM", fullName: "", position: "", phone: "", hasVehicle: "", startDate: "", birthDate: "", address: "", passport: "", telegramLink: "", notes: "" });
+    setForm({ section: initialSection, fullName: "", position: "", phone: "", hasVehicle: "", startDate: "", birthDate: "", address: "", passport: "", telegramLink: "", notes: "" });
     router.refresh();
   };
 

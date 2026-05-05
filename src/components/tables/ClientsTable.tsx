@@ -19,6 +19,14 @@ const columns: ColumnDef<ClientWithManager>[] = [
     ),
   },
   {
+    accessorKey: "projectDate",
+    header: "Дата мероприятия",
+    cell: ({ row }) =>
+      row.original.projectDate
+        ? format(new Date(row.original.projectDate), "dd.MM.yyyy", { locale: ru })
+        : "—",
+  },
+  {
     accessorKey: "clientName",
     header: "Клиент",
     cell: ({ row }) => (
@@ -28,6 +36,13 @@ const columns: ColumnDef<ClientWithManager>[] = [
       >
         {row.original.clientName}
       </Link>
+    ),
+  },
+  {
+    accessorKey: "source",
+    header: "Источник",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">{row.original.source ?? "—"}</span>
     ),
   },
   {
@@ -41,14 +56,6 @@ const columns: ColumnDef<ClientWithManager>[] = [
     cell: ({ row }) => (
       <span className="text-sm">{PROJECT_TYPE_LABELS[row.original.projectType]}</span>
     ),
-  },
-  {
-    accessorKey: "projectDate",
-    header: "Дата мероприятия",
-    cell: ({ row }) =>
-      row.original.projectDate
-        ? format(new Date(row.original.projectDate), "dd.MM.yyyy", { locale: ru })
-        : "—",
   },
   {
     accessorKey: "venue",
