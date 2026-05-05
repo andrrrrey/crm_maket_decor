@@ -92,13 +92,13 @@ export default async function ContractPage({
             {canEdit ? (
               <ContractStatusSelect
                 contractId={contract.id}
-                currentStatus={contract.contractStatus as ContractStatus}
+                currentStatus={(contract.contractStatus as ContractStatus) ?? null}
               />
-            ) : (
+            ) : contract.contractStatus ? (
               <span className="px-2 py-1 text-xs font-medium rounded-full border bg-muted">
                 {contract.contractStatus === "RESERVATION" ? "Бронь" : "Монтаж"}
               </span>
-            )}
+            ) : null}
             {canEdit ? (
               <MockupStatusSelect
                 contract={{

@@ -10,7 +10,7 @@ const updateSchema = z.object({
   dateSignedAt: z.string().optional(),
   installDate: z.string().optional(),
   mockupStatus: z.enum(["APPROVED", "WAITING", "IN_PROGRESS", "PENDING", "TRANSFERRED", "CANCELLED"]).optional(),
-  contractStatus: z.enum(["MONTAGE", "RESERVATION"]).optional(),
+  contractStatus: z.enum(["MONTAGE", "RESERVATION"]).optional().nullable(),
   clientName: z.string().optional(),
   organizerName: z.string().optional().nullable(),
   venue: z.string().optional(),
@@ -86,7 +86,7 @@ export async function PUT(
       ...(data.dateSignedAt && { dateSignedAt: new Date(data.dateSignedAt) }),
       ...(data.installDate && { installDate: new Date(data.installDate) }),
       ...(data.mockupStatus && { mockupStatus: data.mockupStatus }),
-      ...(data.contractStatus && { contractStatus: data.contractStatus }),
+      ...(data.contractStatus !== undefined && { contractStatus: data.contractStatus }),
       ...(data.clientName && { clientName: data.clientName }),
       ...(data.organizerName !== undefined && { organizerName: data.organizerName }),
       ...(data.venue !== undefined && { venue: data.venue }),
@@ -101,7 +101,7 @@ export async function PUT(
   });
 
   // When contract status changes, update calendar entry
-  if (data.contractStatus) {
+  if (data.contractStatus !== undefined) {
     // Delete existing calendar entries for this contract
     await prisma.calendarEntry.deleteMany({
       where: { projectId: params.id },
