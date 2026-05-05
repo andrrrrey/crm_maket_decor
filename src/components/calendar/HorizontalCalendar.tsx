@@ -102,7 +102,7 @@ function SingleMonthCalendar({
   const monthKey = format(monthStart, "yyyy-MM");
 
   return (
-    <div className="shrink-0 w-[320px]">
+    <div className="w-full">
       {/* Month header */}
       <div className="flex items-center gap-2 mb-2 px-1">
         <h3 className="text-sm font-semibold capitalize flex-1">
@@ -246,31 +246,29 @@ export function YearHorizontalCalendar({
   });
 
   return (
-    <div className="overflow-x-auto pb-4">
-      <div className="flex gap-6" style={{ minWidth: "max-content" }}>
-        {months.map((monthStart) => {
-          const m = monthStart.getMonth() + 1;
-          const monthProjects = projects.filter((p) => {
-            const d = new Date(p.date);
-            return d.getFullYear() === year && d.getMonth() + 1 === m;
-          });
-          const monthEntries = calendarEntries.filter((e) => {
-            const d = new Date(e.date);
-            return d.getFullYear() === year && d.getMonth() + 1 === m;
-          });
+    <div className="space-y-8">
+      {months.map((monthStart) => {
+        const m = monthStart.getMonth() + 1;
+        const monthProjects = projects.filter((p) => {
+          const d = new Date(p.date);
+          return d.getFullYear() === year && d.getMonth() + 1 === m;
+        });
+        const monthEntries = calendarEntries.filter((e) => {
+          const d = new Date(e.date);
+          return d.getFullYear() === year && d.getMonth() + 1 === m;
+        });
 
-          return (
-            <SingleMonthCalendar
-              key={monthStart.toISOString()}
-              year={year}
-              month={m}
-              projects={monthProjects}
-              calendarEntries={monthEntries}
-              canDelete={canDelete}
-            />
-          );
-        })}
-      </div>
+        return (
+          <SingleMonthCalendar
+            key={monthStart.toISOString()}
+            year={year}
+            month={m}
+            projects={monthProjects}
+            calendarEntries={monthEntries}
+            canDelete={canDelete}
+          />
+        );
+      })}
     </div>
   );
 }
