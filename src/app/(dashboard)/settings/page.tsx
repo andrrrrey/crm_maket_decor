@@ -117,7 +117,7 @@ export default async function SettingsPage() {
                     isActive: u.isActive,
                     phone: u.phone,
                     hasInfoAccess: u.hasInfoAccess,
-                  }} />
+                  }} allUsers={users.filter((other) => other.id !== u.id).map((other) => ({ id: other.id, name: other.name ?? other.login }))} />
                 </div>
               </div>
             ))}

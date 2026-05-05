@@ -185,23 +185,45 @@ export async function DELETE(req: NextRequest) {
     counts.historyEntries > 0 ||
     counts.notifications > 0;
 
+  const reassignToId = searchParams.get("reassignToId");
+
   if (hasRelated) {
-    const parts: string[] = [];
-    if (counts.clients > 0) parts.push(`клиентов: ${counts.clients}`);
-    if (counts.contracts > 0) parts.push(`договоров: ${counts.contracts}`);
-    if (counts.projects > 0) parts.push(`проектов: ${counts.projects}`);
-    if (counts.designerMockups > 0) parts.push(`макетов: ${counts.designerMockups}`);
-    if (counts.historyEntries > 0) parts.push(`записей истории: ${counts.historyEntries}`);
-    return NextResponse.json(
-      {
-        error: `Нельзя удалить пользователя: у него есть связанные записи (${parts.join(", ")}). Чтобы заблокировать пользователя — снимите флаг "Активен" вместо удаления.`,
-      },
-      { status: 400 }
-    );
+    if (!reassignToId) {
+      const parts: string[] = [];
+      if (counts.clients > 0) parts.push(`клиентов: ${counts.clients}`);
+      if (counts.contracts > 0) parts.push(`договоров: ${counts.contracts}`);
+      if (counts.projects > 0) parts.push(`проектов: ${counts.projects}`);
+      if (counts.designerMockups > 0) parts.push(`макетов: ${counts.designerMockups}`);
+      if (counts.historyEntries > 0) parts.push(`записей истории: ${counts.historyEntries}`);
+      return NextResponse.json(
+        {
+          error: `У пользователя есть связанные записи (${parts.join(", ")}). Выберите пользователя для передачи данных.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const reassignTarget = await prisma.user.findUnique({ where: { id: reassignToId } });
+    if (!reassignTarget) {
+      return NextResponse.json({ error: "Пользователь для передачи данных не найден" }, { status: 400 });
+    }
+
+    await prisma.$transaction([
+      prisma.client.updateMany({ where: { managerId: id }, data: { managerId: reassignToId } }),
+      prisma.contract.updateMany({ where: { managerId: id }, data: { managerId: reassignToId } }),
+      prisma.project.updateMany({ where: { managerId: id }, data: { managerId: reassignToId } }),
+      prisma.mockup.updateMany({ where: { designerId: id }, data: { designerId: reassignToId } }),
+      prisma.managerTask.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
+      prisma.expense.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
+      prisma.message.updateMany({ where: { senderId: id }, data: { senderId: reassignToId } }),
+      prisma.projectMessage.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
+      prisma.historyEntry.updateMany({ where: { userId: id }, data: { userId: reassignToId } }),
+      prisma.notification.deleteMany({ where: { userId: id } }),
+    ]);
   }
 
   await prisma.user.delete({ where: { id } });
-  await logAction(user.id, Actions.USER_DELETE, "user", id, { login: existing.login });
+  await logAction(user.id, Actions.USER_DELETE, "user", id, { login: existing.login, reassignedTo: reassignToId });
 
   return NextResponse.json({ message: "Deleted" });
 }
