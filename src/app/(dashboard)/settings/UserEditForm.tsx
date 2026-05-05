@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, X, Save, Trash2 } from "lucide-react";
+import { Pencil, X, Save, Trash2, AlertTriangle } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { Role } from "@/types";
 
@@ -19,11 +19,18 @@ interface UserData {
   hasInfoAccess: boolean;
 }
 
-export function UserEditButton({ user }: { user: UserData }) {
+interface SimpleUser {
+  id: string;
+  name: string;
+}
+
+export function UserEditButton({ user, allUsers = [] }: { user: UserData; allUsers?: SimpleUser[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [reassignToId, setReassignToId] = useState("");
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
@@ -55,17 +62,26 @@ export function UserEditButton({ user }: { user: UserData }) {
     router.refresh();
   };
 
+  const openDeleteDialog = () => {
+    setDeleteError("");
+    setReassignToId(allUsers[0]?.id ?? "");
+    setShowDeleteDialog(true);
+  };
+
   const handleDelete = async () => {
-    if (!confirm(`Удалить пользователя «${user.name}»? Это действие необратимо.`)) return;
     setDeleteError("");
     setLoading(true);
-    const res = await fetch(`/api/users?id=${user.id}`, { method: "DELETE" });
+    const url = reassignToId
+      ? `/api/users?id=${user.id}&reassignToId=${reassignToId}`
+      : `/api/users?id=${user.id}`;
+    const res = await fetch(url, { method: "DELETE" });
     setLoading(false);
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
       setDeleteError(json.error ?? "Ошибка при удалении");
       return;
     }
+    setShowDeleteDialog(false);
     setEditing(false);
     router.refresh();
   };
@@ -80,6 +96,7 @@ export function UserEditButton({ user }: { user: UserData }) {
         <Pencil className="h-3 w-3 text-muted-foreground" />
       </button>
 
+      {/* Edit modal */}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-lg p-6 w-full max-w-md shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
@@ -155,12 +172,9 @@ export function UserEditButton({ user }: { user: UserData }) {
                 <span>Активен</span>
               </label>
             </div>
-            {deleteError && (
-              <p className="text-xs text-destructive bg-destructive/10 rounded-md px-3 py-2">{deleteError}</p>
-            )}
             <div className="flex justify-between gap-2">
               <button
-                onClick={handleDelete}
+                onClick={openDeleteDialog}
                 disabled={loading}
                 className="px-3 py-2 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50 transition-colors flex items-center gap-2"
               >
@@ -180,6 +194,65 @@ export function UserEditButton({ user }: { user: UserData }) {
                   Сохранить
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete + reassign dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
+          <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-destructive/10">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <h3 className="font-semibold">Удалить пользователя?</h3>
+              <button onClick={() => setShowDeleteDialog(false)} className="ml-auto p-1 hover:bg-accent rounded">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Вы удаляете <span className="font-medium text-foreground">{user.name}</span>.
+              Если у него есть клиенты, договоры или проекты — выберите пользователя,
+              которому они будут переданы.
+            </p>
+
+            {allUsers.length > 0 && (
+              <div>
+                <label className="text-xs text-muted-foreground">Передать данные пользователю</label>
+                <select
+                  value={reassignToId}
+                  onChange={(e) => setReassignToId(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                >
+                  {allUsers.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {deleteError && (
+              <p className="text-xs text-destructive bg-destructive/10 rounded-md px-3 py-2">{deleteError}</p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={loading || (allUsers.length > 0 && !reassignToId)}
+                className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {loading ? "Удаление..." : "Удалить"}
+              </button>
             </div>
           </div>
         </div>
