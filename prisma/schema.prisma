@@ -41,6 +41,7 @@ model User {
   expenses         Expense[]
   messages         Message[]
   projectMessages  ProjectMessage[]
+  contractMessages ContractMessage[]
   historyEntries   HistoryEntry[]
   notifications    Notification[]
 }
@@ -123,12 +124,18 @@ enum ContractMockupStatus {
   CANCELLED
 }
 
+enum ContractStatus {
+  MONTAGE
+  RESERVATION
+}
+
 model Contract {
   id               String               @id @default(cuid())
   contractNumber   Int                  @default(autoincrement())
   dateSignedAt     DateTime
   installDate      DateTime
   mockupStatus     ContractMockupStatus @default(PENDING)
+  contractStatus   ContractStatus       @default(MONTAGE)
   clientName       String
   organizerName    String?
   venue            String?
@@ -138,6 +145,7 @@ model Contract {
   invoiceNumber    String?
   orgAmount        Decimal?
   notes            String?
+  fabricNote       String?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
@@ -146,10 +154,59 @@ model Contract {
   sourceClientId String? @unique
   sourceClient   Client? @relation(fields: [sourceClientId], references: [id])
 
-  estimates     EstimateFile[]
-  contractFiles ContractFile[]
-  project       Project?
-  mockupImages  MockupImage[]
+  estimates        EstimateFile[]
+  contractFiles    ContractFile[]
+  project          Project?
+  mockupImages     MockupImage[]
+  contractTasks    ContractTask[]
+  contractPurchases ContractPurchase[]
+  contractMessages ContractMessage[]
+  contractImages   ContractImage[]
+}
+
+model ContractTask {
+  id          String    @id @default(cuid())
+  contractId  String
+  title       String
+  isCompleted Boolean   @default(false)
+  completedBy String?
+  completedAt DateTime?
+  sortOrder   Int       @default(0)
+  taskType    String    @default("task")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model ContractPurchase {
+  id          String  @id @default(cuid())
+  contractId  String
+  title       String
+  isCompleted Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model ContractMessage {
+  id         String   @id @default(cuid())
+  contractId String
+  userId     String
+  text       String
+  createdAt  DateTime @default(now())
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model ContractImage {
+  id         String   @id @default(cuid())
+  contractId String
+  fileName   String
+  filePath   String
+  imageType  String
+  uploadedAt DateTime @default(now())
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
 }
 
 model ContractFile {
@@ -325,6 +382,33 @@ model InventoryDamage {
   date        DateTime @default(now())
 
   item InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+// ==================== ЦВЕТЫ ====================
+
+model FlowerCategory {
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  flowers Flower[]
+}
+
+model Flower {
+  id           String    @id @default(cuid())
+  categoryId   String?
+  name         String
+  material     String?
+  height       Int?
+  purchaseDate DateTime?
+  quantity     Int       @default(0)
+  pricePerUnit Decimal?
+  photoUrl     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  category FlowerCategory? @relation(fields: [categoryId], references: [id])
 }
 
 // ==================== СКЛАД: ТКАНИ ====================

@@ -10,6 +10,7 @@ const updateSchema = z.object({
   dateSignedAt: z.string().optional(),
   installDate: z.string().optional(),
   mockupStatus: z.enum(["APPROVED", "WAITING", "IN_PROGRESS", "PENDING", "TRANSFERRED", "CANCELLED"]).optional(),
+  contractStatus: z.enum(["MONTAGE", "RESERVATION"]).optional(),
   clientName: z.string().optional(),
   organizerName: z.string().optional().nullable(),
   venue: z.string().optional(),
@@ -19,6 +20,7 @@ const updateSchema = z.object({
   invoiceNumber: z.string().optional(),
   orgAmount: z.number().optional().nullable(),
   notes: z.string().optional(),
+  fabricNote: z.string().optional().nullable(),
 });
 
 export async function GET(
@@ -37,6 +39,7 @@ export async function GET(
       estimates: { orderBy: { version: "asc" } },
       contractFiles: { orderBy: { uploadedAt: "desc" } },
       mockupImages: { orderBy: { uploadedAt: "desc" } },
+      contractImages: { orderBy: { uploadedAt: "desc" } },
       project: { select: { id: true, number: true } },
     },
   });
@@ -83,6 +86,7 @@ export async function PUT(
       ...(data.dateSignedAt && { dateSignedAt: new Date(data.dateSignedAt) }),
       ...(data.installDate && { installDate: new Date(data.installDate) }),
       ...(data.mockupStatus && { mockupStatus: data.mockupStatus }),
+      ...(data.contractStatus && { contractStatus: data.contractStatus }),
       ...(data.clientName && { clientName: data.clientName }),
       ...(data.organizerName !== undefined && { organizerName: data.organizerName }),
       ...(data.venue !== undefined && { venue: data.venue }),
@@ -92,15 +96,54 @@ export async function PUT(
       ...(data.invoiceNumber !== undefined && { invoiceNumber: data.invoiceNumber }),
       ...(data.orgAmount !== undefined && { orgAmount: data.orgAmount }),
       ...(data.notes !== undefined && { notes: data.notes }),
+      ...(data.fabricNote !== undefined && { fabricNote: data.fabricNote }),
     },
   });
 
-  // When contract is approved, move the linked project to MONTAGE (orange)
-  if (data.mockupStatus === "APPROVED") {
-    await prisma.project.updateMany({
-      where: { contractId: params.id },
-      data: { calendarColor: "#FB923C", projectStatus: "MONTAGE" },
+  // When contract status changes, update calendar entry
+  if (data.contractStatus) {
+    // Delete existing calendar entries for this contract
+    await prisma.calendarEntry.deleteMany({
+      where: { projectId: params.id },
     });
+
+    if (data.contractStatus === "RESERVATION") {
+      // Get the full contract to build label
+      const fullContract = await prisma.contract.findUnique({
+        where: { id: params.id },
+        select: { installDate: true, venue: true, organizerName: true, clientName: true },
+      });
+      if (fullContract) {
+        const labelParts = [fullContract.venue, fullContract.organizerName || fullContract.clientName].filter(Boolean);
+        await prisma.calendarEntry.create({
+          data: {
+            date: fullContract.installDate,
+            label: labelParts.join(" · "),
+            color: "#22c55e",
+            entryType: "contract_reservation",
+            projectId: params.id,
+          },
+        });
+      }
+    } else if (data.contractStatus === "MONTAGE") {
+      // Get the full contract to build label
+      const fullContract = await prisma.contract.findUnique({
+        where: { id: params.id },
+        select: { installDate: true, venue: true, organizerName: true, clientName: true },
+      });
+      if (fullContract) {
+        const labelParts = [fullContract.venue, fullContract.organizerName || fullContract.clientName].filter(Boolean);
+        await prisma.calendarEntry.create({
+          data: {
+            date: fullContract.installDate,
+            label: labelParts.join(" · "),
+            color: "#f9a8d4",
+            entryType: "contract_montage",
+            projectId: params.id,
+          },
+        });
+      }
+    }
   }
 
   await logAction(user.id, Actions.CONTRACT_UPDATE, "contract", params.id, { changes: data });

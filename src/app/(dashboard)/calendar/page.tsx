@@ -2,36 +2,24 @@ export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { MonthCalendar } from "@/components/calendar/HorizontalCalendar";
+import { YearHorizontalCalendar } from "@/components/calendar/HorizontalCalendar";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addMonths, subMonths } from "date-fns";
-import { ru } from "date-fns/locale";
+import { format } from "date-fns";
 
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: { month?: string };
+  searchParams: { year?: string };
 }) {
   const session = await auth();
   const user = session?.user as any;
 
-  // Parse month param (YYYY-MM), default to current month
-  let year: number;
-  let month: number;
-  if (searchParams.month && /^\d{4}-\d{2}$/.test(searchParams.month)) {
-    [year, month] = searchParams.month.split("-").map(Number);
-  } else {
-    const now = new Date();
-    year = now.getFullYear();
-    month = now.getMonth() + 1;
-  }
+  const now = new Date();
+  const year = searchParams.year ? parseInt(searchParams.year) : now.getFullYear();
 
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 1);
-
-  const prevMonth = subMonths(startDate, 1);
-  const nextMonth = addMonths(startDate, 1);
+  const startDate = new Date(year, 0, 1);
+  const endDate = new Date(year + 1, 0, 1);
 
   const managerFilter =
     user.role === "MANAGER" ? { managerId: user.id } : {};
@@ -51,9 +39,6 @@ export default async function CalendarPage({
         isCompleted: true,
         manager: { select: { id: true, name: true } },
         contract: { select: { clientName: true } },
-        projectImages: {
-          select: { id: true, filePath: true, imageType: true },
-        },
       },
       orderBy: { date: "asc" },
     }),
@@ -63,28 +48,29 @@ export default async function CalendarPage({
     }),
   ]);
 
-  const monthLabel = format(startDate, "LLLL yyyy", { locale: ru });
+  const prevYear = year - 1;
+  const nextYear = year + 1;
 
   return (
     <div className="space-y-4">
-      {/* Header with month navigation */}
+      {/* Header with year navigation */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold capitalize">{monthLabel}</h1>
+        <h1 className="text-2xl font-bold">{year}</h1>
         <div className="flex items-center gap-2">
           <Link
-            href={`/calendar?month=${format(prevMonth, "yyyy-MM")}`}
+            href={`/calendar?year=${prevYear}`}
             className="p-2 rounded-md hover:bg-accent transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </Link>
           <Link
-            href={`/calendar?month=${format(new Date(), "yyyy-MM")}`}
+            href={`/calendar?year=${now.getFullYear()}`}
             className="px-3 py-1.5 text-sm rounded-md hover:bg-accent transition-colors border"
           >
-            Сегодня
+            Текущий год
           </Link>
           <Link
-            href={`/calendar?month=${format(nextMonth, "yyyy-MM")}`}
+            href={`/calendar?year=${nextYear}`}
             className="p-2 rounded-md hover:bg-accent transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
@@ -96,22 +82,25 @@ export default async function CalendarPage({
       <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-orange-400" />
-          Монтаж
+          Монтаж (проекты)
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-blue-400" />
-          Демонтаж
+          Демонтаж (проекты)
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-400" />
-          Бронь
+          <div className="w-3 h-3 rounded-sm bg-green-200 border border-green-400" />
+          Бронь (договор)
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-pink-200 border border-pink-400" />
+          Монтаж (договор)
         </div>
       </div>
 
-      {/* Full month calendar */}
-      <MonthCalendar
+      {/* Full year horizontal scroll calendar */}
+      <YearHorizontalCalendar
         year={year}
-        month={month}
         projects={projects.map((p) => ({
           ...p,
           date: p.date.toISOString(),
@@ -119,6 +108,7 @@ export default async function CalendarPage({
         calendarEntries={calendarEntries.map((e) => ({
           ...e,
           date: e.date.toISOString(),
+          projectId: e.projectId ?? null,
         }))}
         canDelete={user.role === "DIRECTOR"}
       />

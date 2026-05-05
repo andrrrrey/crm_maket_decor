@@ -18,11 +18,11 @@ export function getUploadPath(subDir: string): string {
   return dir;
 }
 
-// Сгенерировать уникальное имя файла
+// Сгенерировать уникальное имя файла (только ASCII, чтобы URL работали корректно)
 export function generateFileName(originalName: string): string {
   const ext = path.extname(originalName);
   const id = createId();
-  return `${id}_${path.basename(originalName, ext).replace(/[^a-zA-Z0-9а-яА-Я]/g, "_")}${ext}`;
+  return `${id}_${path.basename(originalName, ext).replace(/[^a-zA-Z0-9]/g, "_")}${ext}`;
 }
 
 // Удалить файл безопасно

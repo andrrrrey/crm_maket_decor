@@ -3,10 +3,112 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MOCKUP_STATUS_LABELS } from "@/lib/constants";
-import type { ContractMockupStatus } from "@/types";
+import type { ContractMockupStatus, ContractStatus } from "@/types";
 import { Pencil, X, Save, ChevronDown, Upload, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+
+const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
+  MONTAGE: "Монтаж",
+  RESERVATION: "Бронь",
+};
+
+const CONTRACT_STATUS_COLORS: Record<ContractStatus, string> = {
+  MONTAGE: "bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-900/30 dark:text-pink-300",
+  RESERVATION: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300",
+};
+
+export function ContractStatusSelect({
+  contractId,
+  currentStatus,
+}: {
+  contractId: string;
+  currentStatus: ContractStatus;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = async (newStatus: string) => {
+    if (newStatus === currentStatus) return;
+    setLoading(true);
+    await fetch(`/api/contracts/${contractId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contractStatus: newStatus }),
+    });
+    setLoading(false);
+    router.refresh();
+  };
+
+  return (
+    <div className="relative inline-flex">
+      <select
+        value={currentStatus}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={loading}
+        className={`appearance-none pl-3 pr-8 py-1.5 text-xs font-medium rounded-full border cursor-pointer focus:ring-1 focus:ring-ring outline-none disabled:opacity-60 transition-colors ${CONTRACT_STATUS_COLORS[currentStatus]}`}
+      >
+        {(Object.keys(CONTRACT_STATUS_LABELS) as ContractStatus[]).map((s) => (
+          <option key={s} value={s} className="bg-background text-foreground">
+            {CONTRACT_STATUS_LABELS[s]}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none" />
+    </div>
+  );
+}
+
+export function ContractFabricNote({
+  contractId,
+  initialValue,
+  canEdit,
+}: {
+  contractId: string;
+  initialValue: string | null;
+  canEdit: boolean;
+}) {
+  const router = useRouter();
+  const [value, setValue] = useState(initialValue ?? "");
+  const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setLoading(true);
+    await fetch(`/api/contracts/${contractId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fabricNote: value }),
+    });
+    setLoading(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    router.refresh();
+  };
+
+  return (
+    <div className="space-y-2">
+      <textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        disabled={!canEdit}
+        placeholder="Тип материала..."
+        rows={3}
+        className="w-full px-3 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none resize-none disabled:opacity-60"
+      />
+      {canEdit && (
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
+        >
+          <Save className="h-3 w-3" />
+          {saved ? "Сохранено" : loading ? "Сохранение..." : "Сохранить"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 interface ContractData {
   id: string;

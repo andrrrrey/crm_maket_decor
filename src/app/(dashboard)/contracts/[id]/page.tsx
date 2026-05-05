@@ -16,8 +16,18 @@ function formatStringDate(val: string | null | undefined): string {
 }
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { MockupStatusSelect, ContractEditForm, ContractDeleteButton, ContractFileUpload } from "./ContractEditForm";
-import type { ContractMockupStatus } from "@/types";
+import {
+  MockupStatusSelect,
+  ContractEditForm,
+  ContractDeleteButton,
+  ContractFileUpload,
+  ContractStatusSelect,
+  ContractFabricNote,
+} from "./ContractEditForm";
+import { ContractTaskList } from "./ContractTaskList";
+import { ContractImageUpload, ContractImageDelete } from "./ContractImages";
+import { ContractChat } from "./ContractChat";
+import type { ContractMockupStatus, ContractStatus } from "@/types";
 
 export default async function ContractPage({
   params,
@@ -35,6 +45,16 @@ export default async function ContractPage({
       estimates: { orderBy: { version: "asc" } },
       contractFiles: { orderBy: { uploadedAt: "desc" } },
       mockupImages: { orderBy: { uploadedAt: "desc" } },
+      contractImages: { orderBy: { uploadedAt: "desc" } },
+      contractTasks: { orderBy: { sortOrder: "asc" } },
+      contractPurchases: { orderBy: { sortOrder: "asc" } },
+      contractMessages: {
+        include: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+        },
+        orderBy: { createdAt: "asc" },
+        take: 100,
+      },
       project: { select: { id: true, number: true } },
     },
   });
@@ -42,16 +62,20 @@ export default async function ContractPage({
   if (!contract) notFound();
 
   const canEdit = user.role === "DIRECTOR" || user.role === "MANAGER";
+  const canView = user.role === "DIRECTOR" || user.role === "MANAGER" || user.role === "PRODUCTION";
 
-  const contractFiles = contract.contractFiles.filter(
-    (f) => f.fileType === "contract"
-  );
-  const invoiceFiles = contract.contractFiles.filter(
-    (f) => f.fileType === "invoice"
-  );
-  const otherFiles = contract.contractFiles.filter(
-    (f) => f.fileType === "other"
-  );
+  const contractFiles = contract.contractFiles.filter((f) => f.fileType === "contract");
+  const invoiceFiles = contract.contractFiles.filter((f) => f.fileType === "invoice");
+
+  const productionTasks = contract.contractTasks.filter((t) => t.taskType === "production");
+  const generalTasks = contract.contractTasks.filter((t) => t.taskType !== "production");
+  const completedProduction = productionTasks.filter((t) => t.isCompleted).length;
+  const completedGeneral = generalTasks.filter((t) => t.isCompleted).length;
+  const completedPurchases = contract.contractPurchases.filter((p) => p.isCompleted).length;
+
+  const hallImages = contract.contractImages.filter((img) => img.imageType === "hall");
+  const ceremonyImages = contract.contractImages.filter((img) => img.imageType === "ceremony");
+  const productionImages = contract.contractImages.filter((img) => img.imageType === "production");
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -61,10 +85,20 @@ export default async function ContractPage({
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold">
               Договор №{contract.contractNumber}
             </h1>
+            {canEdit ? (
+              <ContractStatusSelect
+                contractId={contract.id}
+                currentStatus={contract.contractStatus as ContractStatus}
+              />
+            ) : (
+              <span className="px-2 py-1 text-xs font-medium rounded-full border bg-muted">
+                {contract.contractStatus === "RESERVATION" ? "Бронь" : "Монтаж"}
+              </span>
+            )}
             {canEdit ? (
               <MockupStatusSelect
                 contract={{
@@ -153,19 +187,11 @@ export default async function ContractPage({
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Дата заключения</dt>
-              <dd>
-                {format(new Date(contract.dateSignedAt), "dd.MM.yyyy", {
-                  locale: ru,
-                })}
-              </dd>
+              <dd>{format(new Date(contract.dateSignedAt), "dd.MM.yyyy", { locale: ru })}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Дата монтажа</dt>
-              <dd>
-                {format(new Date(contract.installDate), "dd.MM.yyyy", {
-                  locale: ru,
-                })}
-              </dd>
+              <dd>{format(new Date(contract.installDate), "dd.MM.yyyy", { locale: ru })}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Площадка</dt>
@@ -206,9 +232,7 @@ export default async function ContractPage({
         {contract.notes && (
           <div className="p-4 rounded-lg border bg-card">
             <h2 className="text-sm font-semibold mb-2">Примечания</h2>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {contract.notes}
-            </p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{contract.notes}</p>
           </div>
         )}
       </div>
@@ -225,10 +249,7 @@ export default async function ContractPage({
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Сметы</h2>
           <FileListWithDelete
-            files={contract.estimates.map((f) => ({
-              ...f,
-              uploadedAt: f.uploadedAt.toISOString(),
-            }))}
+            files={contract.estimates.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
             canDelete={canEdit}
             deleteUrl={`/api/contracts/${contract.id}/files`}
           />
@@ -236,10 +257,7 @@ export default async function ContractPage({
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Файлы договора</h2>
           <FileListWithDelete
-            files={contractFiles.map((f) => ({
-              ...f,
-              uploadedAt: f.uploadedAt.toISOString(),
-            }))}
+            files={contractFiles.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
             canDelete={canEdit}
             deleteUrl={`/api/contracts/${contract.id}/files`}
           />
@@ -250,17 +268,14 @@ export default async function ContractPage({
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Счета</h2>
           <FileListWithDelete
-            files={invoiceFiles.map((f) => ({
-              ...f,
-              uploadedAt: f.uploadedAt.toISOString(),
-            }))}
+            files={invoiceFiles.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
             canDelete={canEdit}
             deleteUrl={`/api/contracts/${contract.id}/files`}
           />
         </div>
       )}
 
-      {/* Изображения макетов */}
+      {/* Макеты (legacy mockupImages) */}
       {contract.mockupImages.length > 0 && (
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Макеты</h2>
@@ -281,6 +296,219 @@ export default async function ContractPage({
               </a>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Производство + Задачи */}
+      {canView && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="p-4 rounded-lg border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold">
+                Производство ({completedProduction}/{productionTasks.length})
+              </h2>
+            </div>
+            {productionTasks.length > 0 && (
+              <div className="w-full bg-muted rounded-full h-1.5 mb-3">
+                <div
+                  className="bg-orange-400 h-1.5 rounded-full transition-all"
+                  style={{
+                    width: `${productionTasks.length > 0 ? (completedProduction / productionTasks.length) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+            )}
+            <ContractTaskList
+              tasks={productionTasks.map((t) => ({ ...t, completedBy: t.completedBy ?? null }))}
+              contractId={contract.id}
+              canEdit={canEdit}
+              taskType="production"
+            />
+          </div>
+
+          <div className="p-4 rounded-lg border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold">
+                Задачи ({completedGeneral}/{generalTasks.length})
+              </h2>
+            </div>
+            {generalTasks.length > 0 && (
+              <div className="w-full bg-muted rounded-full h-1.5 mb-3">
+                <div
+                  className="bg-green-500 h-1.5 rounded-full transition-all"
+                  style={{
+                    width: `${generalTasks.length > 0 ? (completedGeneral / generalTasks.length) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+            )}
+            <ContractTaskList
+              tasks={generalTasks.map((t) => ({ ...t, completedBy: t.completedBy ?? null }))}
+              contractId={contract.id}
+              canEdit={canEdit}
+              taskType="task"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Материалы + Чеклист закупок */}
+      {canView && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="p-4 rounded-lg border bg-card">
+            <h2 className="text-sm font-semibold mb-3">Материалы</h2>
+            <ContractFabricNote
+              contractId={contract.id}
+              initialValue={contract.fabricNote ?? null}
+              canEdit={canEdit}
+            />
+          </div>
+
+          <div className="p-4 rounded-lg border bg-card">
+            <h2 className="text-sm font-semibold mb-3">
+              Чеклист закупок ({completedPurchases}/{contract.contractPurchases.length})
+            </h2>
+            <ContractTaskList
+              tasks={contract.contractPurchases.map((p) => ({
+                id: p.id,
+                title: p.title,
+                isCompleted: p.isCompleted,
+                completedBy: null,
+              }))}
+              contractId={contract.id}
+              canEdit={canEdit}
+              type="purchase"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Изображения */}
+      {canView && (
+        <div className="space-y-4">
+          {/* Рисунок зала */}
+          <div className="p-4 rounded-lg border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold">Рисунок зала</h2>
+              {canEdit && <ContractImageUpload contractId={contract.id} imageType="hall" />}
+            </div>
+            {hallImages.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {hallImages.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <a
+                      href={`/api/files/${img.filePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={`/api/files/${img.filePath}`}
+                        alt={img.fileName}
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                    {canEdit && (
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ContractImageDelete contractId={contract.id} imageId={img.id} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Нет изображений</p>
+            )}
+          </div>
+
+          {/* Рисунок церемонии */}
+          <div className="p-4 rounded-lg border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold">Рисунок церемонии</h2>
+              {canEdit && <ContractImageUpload contractId={contract.id} imageType="ceremony" />}
+            </div>
+            {ceremonyImages.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {ceremonyImages.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <a
+                      href={`/api/files/${img.filePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={`/api/files/${img.filePath}`}
+                        alt={img.fileName}
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                    {canEdit && (
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ContractImageDelete contractId={contract.id} imageId={img.id} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Нет изображений</p>
+            )}
+          </div>
+
+          {/* Фото производства */}
+          <div className="p-4 rounded-lg border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold">Фото производства</h2>
+              {canEdit && <ContractImageUpload contractId={contract.id} imageType="production" />}
+            </div>
+            {productionImages.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {productionImages.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <a
+                      href={`/api/files/${img.filePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-square rounded-md overflow-hidden border hover:opacity-90 transition-opacity"
+                    >
+                      <img
+                        src={`/api/files/${img.filePath}`}
+                        alt={img.fileName}
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                    {canEdit && (
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ContractImageDelete contractId={contract.id} imageId={img.id} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Нет изображений</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Чат проекта */}
+      {canView && (
+        <div className="p-4 rounded-lg border bg-card">
+          <h2 className="text-sm font-semibold mb-3">
+            Чат проекта ({contract.contractMessages.length})
+          </h2>
+          <ContractChat
+            contractId={contract.id}
+            initialMessages={contract.contractMessages.map((m) => ({
+              id: m.id,
+              text: m.text,
+              createdAt: m.createdAt.toISOString(),
+              user: m.user,
+            }))}
+            currentUserId={user.id}
+          />
         </div>
       )}
     </div>

@@ -14,9 +14,15 @@ import type {
   MailEntry,
   Mockup,
   MockupImage,
+  ContractImage,
+  ContractTask,
+  ContractPurchase,
+  ContractMessage,
+  FlowerCategory,
+  Flower,
 } from "@prisma/client";
 
-export type { User, Client, Contract, Project };
+export type { User, Client, Contract, Project, ContractImage, ContractTask, ContractPurchase, ContractMessage, FlowerCategory, Flower };
 
 // Роли пользователей
 export type Role = "DIRECTOR" | "MANAGER" | "PRODUCTION" | "DESIGNER";
@@ -40,6 +46,9 @@ export type ContractMockupStatus =
   | "PENDING"
   | "TRANSFERRED"
   | "CANCELLED";
+
+// Рабочий статус договора
+export type ContractStatus = "MONTAGE" | "RESERVATION";
 
 // Секция персонала
 export type StaffSection =
@@ -93,6 +102,7 @@ export type ContractWithManager = Contract & {
   manager: Pick<User, "id" | "name">;
   sourceClient?: Pick<Client, "id" | "clientName"> | null;
   mockupImages?: Pick<MockupImage, "id" | "filePath" | "fileName">[];
+  contractImages?: Pick<ContractImage, "id" | "filePath" | "fileName" | "imageType">[];
 };
 
 // Проект с менеджером

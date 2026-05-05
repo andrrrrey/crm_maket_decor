@@ -89,7 +89,9 @@ const columns: ColumnDef<ContractWithManager>[] = [
     id: "layoutImage",
     header: "Рисунок",
     cell: ({ row }) => {
-      const img = row.original.mockupImages?.[0];
+      const hallImg = row.original.contractImages?.find((img) => img.imageType === "hall");
+      const fallbackImg = row.original.mockupImages?.[0];
+      const img = hallImg ?? fallbackImg;
       if (!img) return <span className="text-muted-foreground text-xs">—</span>;
       return <MockupThumbnail filePath={img.filePath} fileName={img.fileName} />;
     },

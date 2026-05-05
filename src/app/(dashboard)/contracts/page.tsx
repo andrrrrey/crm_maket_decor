@@ -26,6 +26,12 @@ export default async function ContractsPage() {
         orderBy: { uploadedAt: "asc" },
         take: 1,
       },
+      contractImages: {
+        where: { imageType: "hall" },
+        select: { id: true, filePath: true, fileName: true, imageType: true },
+        orderBy: { uploadedAt: "asc" },
+        take: 1,
+      },
     },
     orderBy: { installDate: "asc" },
   });

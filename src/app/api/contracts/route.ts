@@ -42,6 +42,11 @@ export async function GET(req: NextRequest) {
     include: {
       manager: { select: { id: true, name: true } },
       sourceClient: { select: { id: true, clientName: true } },
+      contractImages: {
+        where: { imageType: "hall" },
+        select: { id: true, filePath: true, fileName: true, imageType: true },
+        take: 1,
+      },
       _count: { select: { contractFiles: true, estimates: true } },
     },
     orderBy: { createdAt: "desc" },
