@@ -21,7 +21,7 @@ async function getStats(userId: string, role: string) {
       prisma.client.count({ where: { ...managerFilter, isRejected: true } }),
       prisma.client.groupBy({
         by: ["status"],
-        where: { ...managerFilter, isRejected: false, status: { not: "CONTRACT" } },
+        where: { ...managerFilter, isRejected: false },
         _count: true,
       }),
     ]);
@@ -33,13 +33,22 @@ async function getStats(userId: string, role: string) {
         )
       : 0;
 
+  // Build funnel: use actual contract count for CONTRACT stage
+  const statusCounts = clientsByStatus
+    .filter((s) => s.status !== "CONTRACT")
+    .map((s) => ({ status: s.status, count: s._count }));
+
+  if (totalContracts > 0) {
+    statusCounts.push({ status: "CONTRACT", count: totalContracts });
+  }
+
   return {
     totalClients,
     totalContracts,
     totalProjects,
     rejectedClients,
     conversionRate,
-    clientsByStatus: clientsByStatus.map((s) => ({ status: s.status, count: s._count })),
+    clientsByStatus: statusCounts,
   };
 }
 
@@ -135,10 +144,13 @@ export default async function DashboardPage({
       ])
     : [{ _sum: { amount: null } }, { _sum: { amount: null } }];
 
+  const FUNNEL_ORDER = ["MEETING", "DISCUSSION", "ESTIMATE", "CONTRACT"];
   const sortedStatuses = stats
-    ? [...stats.clientsByStatus].sort((a, b) => b.count - a.count)
+    ? [...stats.clientsByStatus].sort(
+        (a, b) => FUNNEL_ORDER.indexOf(a.status) - FUNNEL_ORDER.indexOf(b.status)
+      )
     : [];
-  const maxStatusCount = sortedStatuses[0]?.count || 1;
+  const maxStatusCount = Math.max(...sortedStatuses.map((s) => s.count), 1);
 
   return (
     <div className="space-y-6">
