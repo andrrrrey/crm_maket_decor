@@ -8,12 +8,14 @@ import { Pencil, X, Save, ChevronDown, Upload, Trash2 } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
-const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
+const CONTRACT_STATUS_LABELS: Record<string, string> = {
+  "": "Без статуса",
   MONTAGE: "Монтаж",
   RESERVATION: "Бронь",
 };
 
-const CONTRACT_STATUS_COLORS: Record<ContractStatus, string> = {
+const CONTRACT_STATUS_COLORS: Record<string, string> = {
+  "": "bg-muted text-muted-foreground border-border",
   MONTAGE: "bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-900/30 dark:text-pink-300",
   RESERVATION: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300",
 };
@@ -23,18 +25,19 @@ export function ContractStatusSelect({
   currentStatus,
 }: {
   contractId: string;
-  currentStatus: ContractStatus;
+  currentStatus: ContractStatus | null;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const val = currentStatus ?? "";
 
   const handleChange = async (newStatus: string) => {
-    if (newStatus === currentStatus) return;
+    if (newStatus === val) return;
     setLoading(true);
     await fetch(`/api/contracts/${contractId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contractStatus: newStatus }),
+      body: JSON.stringify({ contractStatus: newStatus || null }),
     });
     setLoading(false);
     router.refresh();
@@ -43,14 +46,14 @@ export function ContractStatusSelect({
   return (
     <div className="relative inline-flex">
       <select
-        value={currentStatus}
+        value={val}
         onChange={(e) => handleChange(e.target.value)}
         disabled={loading}
-        className={`appearance-none pl-3 pr-8 py-1.5 text-xs font-medium rounded-full border cursor-pointer focus:ring-1 focus:ring-ring outline-none disabled:opacity-60 transition-colors ${CONTRACT_STATUS_COLORS[currentStatus]}`}
+        className={`appearance-none pl-3 pr-8 py-1.5 text-xs font-medium rounded-full border cursor-pointer focus:ring-1 focus:ring-ring outline-none disabled:opacity-60 transition-colors ${CONTRACT_STATUS_COLORS[val]}`}
       >
-        {(Object.keys(CONTRACT_STATUS_LABELS) as ContractStatus[]).map((s) => (
-          <option key={s} value={s} className="bg-background text-foreground">
-            {CONTRACT_STATUS_LABELS[s]}
+        {Object.entries(CONTRACT_STATUS_LABELS).map(([k, label]) => (
+          <option key={k} value={k} className="bg-background text-foreground">
+            {label}
           </option>
         ))}
       </select>

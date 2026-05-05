@@ -135,7 +135,7 @@ model Contract {
   dateSignedAt     DateTime
   installDate      DateTime
   mockupStatus     ContractMockupStatus @default(PENDING)
-  contractStatus   ContractStatus       @default(MONTAGE)
+  contractStatus   ContractStatus?
   clientName       String
   organizerName    String?
   venue            String?

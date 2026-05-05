@@ -19,7 +19,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, FolderKanban } from "lucide-react";
 
+import { useEffect } from "react";
+
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+function ScrollToCurrentMonth({ year }: { year: number }) {
+  useEffect(() => {
+    const now = new Date();
+    if (now.getFullYear() !== year) return;
+    const id = `month-${year}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [year]);
+  return null;
+}
 
 function getDayIndex(date: Date): number {
   const day = getDay(date);
@@ -101,8 +114,10 @@ function SingleMonthCalendar({
   const rows = Math.ceil(totalCells / 7);
   const monthKey = format(monthStart, "yyyy-MM");
 
+  const monthId = `month-${year}-${String(month).padStart(2, "0")}`;
+
   return (
-    <div className="w-full">
+    <div className="w-full" id={monthId}>
       {/* Month header */}
       <div className="flex items-center gap-2 mb-2 px-1">
         <h3 className="text-sm font-semibold capitalize flex-1">
@@ -247,6 +262,7 @@ export function YearHorizontalCalendar({
 
   return (
     <div className="space-y-8">
+      <ScrollToCurrentMonth year={year} />
       {months.map((monthStart) => {
         const m = monthStart.getMonth() + 1;
         const monthProjects = projects.filter((p) => {

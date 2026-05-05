@@ -81,20 +81,12 @@ export default async function CalendarPage({
       {/* Legend */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-orange-400" />
-          Монтаж (проекты)
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-blue-400" />
-          Демонтаж (проекты)
-        </div>
-        <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-green-200 border border-green-400" />
-          Бронь (договор)
+          Бронь
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-pink-200 border border-pink-400" />
-          Монтаж (договор)
+          Монтаж
         </div>
       </div>
 
