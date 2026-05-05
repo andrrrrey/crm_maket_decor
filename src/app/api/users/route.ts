@@ -151,8 +151,54 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Нельзя удалить себя" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({ where: { id } });
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          clients: true,
+          contracts: true,
+          projects: true,
+          designerMockups: true,
+          managerTasks: true,
+          expenses: true,
+          messages: true,
+          projectMessages: true,
+          historyEntries: true,
+          notifications: true,
+        },
+      },
+    },
+  });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const counts = existing._count;
+  const hasRelated =
+    counts.clients > 0 ||
+    counts.contracts > 0 ||
+    counts.projects > 0 ||
+    counts.designerMockups > 0 ||
+    counts.managerTasks > 0 ||
+    counts.expenses > 0 ||
+    counts.messages > 0 ||
+    counts.projectMessages > 0 ||
+    counts.historyEntries > 0 ||
+    counts.notifications > 0;
+
+  if (hasRelated) {
+    const parts: string[] = [];
+    if (counts.clients > 0) parts.push(`клиентов: ${counts.clients}`);
+    if (counts.contracts > 0) parts.push(`договоров: ${counts.contracts}`);
+    if (counts.projects > 0) parts.push(`проектов: ${counts.projects}`);
+    if (counts.designerMockups > 0) parts.push(`макетов: ${counts.designerMockups}`);
+    if (counts.historyEntries > 0) parts.push(`записей истории: ${counts.historyEntries}`);
+    return NextResponse.json(
+      {
+        error: `Нельзя удалить пользователя: у него есть связанные записи (${parts.join(", ")}). Чтобы заблокировать пользователя — снимите флаг "Активен" вместо удаления.`,
+      },
+      { status: 400 }
+    );
+  }
 
   await prisma.user.delete({ where: { id } });
   await logAction(user.id, Actions.USER_DELETE, "user", id, { login: existing.login });

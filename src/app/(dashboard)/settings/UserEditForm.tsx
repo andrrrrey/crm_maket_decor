@@ -23,6 +23,7 @@ export function UserEditButton({ user }: { user: UserData }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
@@ -56,9 +57,15 @@ export function UserEditButton({ user }: { user: UserData }) {
 
   const handleDelete = async () => {
     if (!confirm(`Удалить пользователя «${user.name}»? Это действие необратимо.`)) return;
+    setDeleteError("");
     setLoading(true);
-    await fetch(`/api/users?id=${user.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/users?id=${user.id}`, { method: "DELETE" });
     setLoading(false);
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setDeleteError(json.error ?? "Ошибка при удалении");
+      return;
+    }
     setEditing(false);
     router.refresh();
   };
@@ -148,6 +155,9 @@ export function UserEditButton({ user }: { user: UserData }) {
                 <span>Активен</span>
               </label>
             </div>
+            {deleteError && (
+              <p className="text-xs text-destructive bg-destructive/10 rounded-md px-3 py-2">{deleteError}</p>
+            )}
             <div className="flex justify-between gap-2">
               <button
                 onClick={handleDelete}
