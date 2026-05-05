@@ -41,6 +41,15 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+
+  if (body.id) {
+    const updated = await prisma.inventoryCategory.update({
+      where: { id: body.id },
+      data: { name: body.name },
+    });
+    return NextResponse.json({ data: updated });
+  }
+
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

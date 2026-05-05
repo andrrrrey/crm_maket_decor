@@ -64,7 +64,7 @@ export function OpenMonthsSettings({ initialMonths }: OpenMonthsSettingsProps) {
                   : "bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground"
               )}
             >
-              {format(new Date(month + "-01"), "MMM yyyy", { locale: ru })}
+              {format(new Date(month + "-01"), "LLL yyyy", { locale: ru })}
             </button>
           );
         })}

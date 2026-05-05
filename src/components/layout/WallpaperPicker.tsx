@@ -1,12 +1,13 @@
 "use client";
 
 import { useWallpaper } from "@/hooks/useWallpaper";
-import { Check, X, Link as LinkIcon } from "lucide-react";
+import { Check, X, Link as LinkIcon, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export function WallpaperPicker({ onClose }: { onClose: () => void }) {
   const { wallpaperId, setWallpaper, wallpapers, customUrl, setCustomUrl } = useWallpaper();
   const [urlInput, setUrlInput] = useState(customUrl);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,6 +23,18 @@ export function WallpaperPicker({ onClose }: { onClose: () => void }) {
   const handleCustomApply = () => {
     setCustomUrl(urlInput);
     setWallpaper("custom");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setCustomUrl(dataUrl);
+      setWallpaper("custom");
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -61,6 +74,25 @@ export function WallpaperPicker({ onClose }: { onClose: () => void }) {
         ))}
       </div>
 
+      {/* Загрузить с ПК */}
+      <div className="space-y-2 mb-3">
+        <label className="text-xs text-muted-foreground">Загрузить с компьютера</label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs bg-white/10 dark:bg-white/5 rounded-md border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-colors"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Выбрать изображение
+        </button>
+      </div>
+
       {/* Свой URL */}
       <div className="space-y-2">
         <label className="text-xs text-muted-foreground">Свой URL изображения</label>
@@ -69,7 +101,7 @@ export function WallpaperPicker({ onClose }: { onClose: () => void }) {
             <LinkIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="url"
-              value={urlInput}
+              value={urlInput.startsWith("data:") ? "" : urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="https://..."
               className="w-full pl-7 pr-2 py-1.5 text-xs bg-white/10 dark:bg-white/5 rounded-md border border-white/20 dark:border-white/10 outline-none focus:ring-1 focus:ring-primary/50"
@@ -77,7 +109,7 @@ export function WallpaperPicker({ onClose }: { onClose: () => void }) {
           </div>
           <button
             onClick={handleCustomApply}
-            disabled={!urlInput}
+            disabled={!urlInput || urlInput.startsWith("data:")}
             className="px-2.5 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-40 transition-colors"
           >
             OK

@@ -39,6 +39,7 @@ const NAV_ITEMS = [
   { key: "designer", label: "Дизайнер", href: "/designer", icon: Palette },
   { key: "manager", label: "Менеджер", href: "/manager", icon: User },
   { key: "inventory", label: "Инвентарь", href: "/inventory", icon: Package },
+  { key: "fabrics", label: "Ткани", href: "/inventory/fabrics", icon: Shirt },
   { key: "info", label: "Инфо", href: "/info/staff", icon: Info },
   { key: "mail", label: "Почта", href: "/mail", icon: Mail },
   { key: "stats", label: "Статистика", href: "/stats", icon: BarChart3 },
@@ -96,7 +97,10 @@ export function Sidebar() {
           const Icon = item.icon;
           const isActive =
             pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            (item.href !== "/dashboard" &&
+              item.key !== "inventory" &&
+              pathname.startsWith(item.href)) ||
+            (item.key === "inventory" && pathname === "/inventory");
 
           return (
             <Link

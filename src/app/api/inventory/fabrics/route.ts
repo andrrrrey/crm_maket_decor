@@ -7,6 +7,8 @@ import { z } from "zod";
 const createSchema = z.object({
   material: z.string().min(1),
   color: z.string().min(1),
+  categoryId: z.string().optional(),
+  photoUrl: z.string().optional(),
   width: z.number().optional(),
   cuts: z.string().optional(),
   quantity: z.number().optional(),
@@ -16,11 +18,15 @@ const createSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const fabrics = await prisma.fabric.findMany({
+  const { searchParams } = new URL(req.url);
+  const categoryId = searchParams.get("categoryId");
+
+  const fabrics = await (prisma as any).fabric.findMany({
+    where: categoryId ? { categoryId } : {},
     orderBy: [{ material: "asc" }, { color: "asc" }],
   });
 
@@ -39,11 +45,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   if (body.id) {
-    const fabric = await prisma.fabric.update({
+    const fabric = await (prisma as any).fabric.update({
       where: { id: body.id },
       data: {
         ...(body.material && { material: body.material }),
         ...(body.color && { color: body.color }),
+        ...(body.categoryId !== undefined && { categoryId: body.categoryId || null }),
+        ...(body.photoUrl !== undefined && { photoUrl: body.photoUrl }),
         ...(body.width !== undefined && { width: body.width }),
         ...(body.cuts !== undefined && { cuts: body.cuts }),
         ...(body.quantity !== undefined && { quantity: body.quantity }),
@@ -62,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const fabric = await prisma.fabric.create({ data: parsed.data });
+  const fabric = await (prisma as any).fabric.create({ data: parsed.data });
   await logAction(user.id, Actions.FABRIC_CREATE, "fabric", fabric.id, {
     material: fabric.material,
     color: fabric.color,

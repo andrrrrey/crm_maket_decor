@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, X, Save } from "lucide-react";
+import { Pencil, X, Save, Trash2 } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/constants";
 import type { Role } from "@/types";
 
@@ -49,6 +49,15 @@ export function UserEditButton({ user }: { user: UserData }) {
         password: form.password || undefined,
       }),
     });
+    setLoading(false);
+    setEditing(false);
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Удалить пользователя «${user.name}»? Это действие необратимо.`)) return;
+    setLoading(true);
+    await fetch(`/api/users?id=${user.id}`, { method: "DELETE" });
     setLoading(false);
     setEditing(false);
     router.refresh();
@@ -139,18 +148,28 @@ export function UserEditButton({ user }: { user: UserData }) {
                 <span>Активен</span>
               </label>
             </div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors">
-                Отмена
-              </button>
+            <div className="flex justify-between gap-2">
               <button
-                onClick={handleSave}
-                disabled={loading || !form.name.trim()}
-                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
+                onClick={handleDelete}
+                disabled={loading}
+                className="px-3 py-2 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50 transition-colors flex items-center gap-2"
               >
-                <Save className="h-3.5 w-3.5" />
-                Сохранить
+                <Trash2 className="h-3.5 w-3.5" />
+                Удалить
               </button>
+              <div className="flex gap-2">
+                <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors">
+                  Отмена
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={loading || !form.name.trim()}
+                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Сохранить
+                </button>
+              </div>
             </div>
           </div>
         </div>

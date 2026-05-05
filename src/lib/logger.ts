@@ -73,6 +73,7 @@ export const Actions = {
   USER_CREATE: "user.create",
   USER_UPDATE: "user.update",
   USER_DEACTIVATE: "user.deactivate",
+  USER_DELETE: "user.delete",
 
   // Файлы
   FILE_UPLOAD: "file.upload",

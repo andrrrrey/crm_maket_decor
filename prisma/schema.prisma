@@ -307,8 +307,9 @@ model InventoryItem {
   color      String?
   quantity   Int      @default(0)
   photoUrl   String?
-  status     String   @default("active")
+  status     String   @default("site")
   comment    String?
+  location   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -328,10 +329,21 @@ model InventoryDamage {
 
 // ==================== СКЛАД: ТКАНИ ====================
 
+model FabricCategory {
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  fabrics Fabric[]
+}
+
 model Fabric {
   id          String   @id @default(cuid())
+  categoryId  String?
   material    String
   color       String
+  photoUrl    String?
   width       Int?
   cuts        String?
   quantity    Int?
@@ -341,6 +353,8 @@ model Fabric {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  category FabricCategory? @relation(fields: [categoryId], references: [id])
 }
 
 // ==================== ИНФО: ПЕРСОНАЛ ====================
