@@ -4,6 +4,9 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
+  eachMonthOfInterval,
+  startOfYear,
+  endOfYear,
   getDay,
   isToday,
   format,
@@ -14,19 +17,13 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, FolderKanban } from "lucide-react";
 
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 function getDayIndex(date: Date): number {
   const day = getDay(date);
   return day === 0 ? 6 : day - 1;
-}
-
-interface ProjectImage {
-  id: string;
-  filePath: string;
-  imageType: string;
 }
 
 interface CalendarProject {
@@ -40,7 +37,6 @@ interface CalendarProject {
   isCompleted: boolean;
   month: string;
   manager: { id: string; name: string };
-  projectImages: ProjectImage[];
   contract?: { clientName: string } | null;
 }
 
@@ -50,6 +46,7 @@ interface CalendarEntry {
   label: string;
   color: string;
   entryType: string;
+  projectId?: string | null;
 }
 
 interface MonthCalendarProps {
@@ -65,7 +62,23 @@ function projectLabel(p: CalendarProject): string {
   return parts.length > 0 ? parts.join(" · ") : `Проект #${p.number}`;
 }
 
-export function MonthCalendar({ year, month, projects, calendarEntries, canDelete }: MonthCalendarProps) {
+function getCellBgClass(entries: CalendarEntry[]): string {
+  const contractEntry = entries.find(
+    (e) => e.entryType === "contract_reservation" || e.entryType === "contract_montage"
+  );
+  if (!contractEntry) return "";
+  if (contractEntry.entryType === "contract_reservation") return "bg-green-200 dark:bg-green-900/60";
+  if (contractEntry.entryType === "contract_montage") return "bg-pink-200 dark:bg-pink-900/60";
+  return "";
+}
+
+function SingleMonthCalendar({
+  year,
+  month,
+  projects,
+  calendarEntries,
+  canDelete,
+}: MonthCalendarProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -84,19 +97,32 @@ export function MonthCalendar({ year, month, projects, calendarEntries, canDelet
   const monthEnd = endOfMonth(monthStart);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startPadding = getDayIndex(monthStart);
-
-  // Build grid cells: padding + days
   const totalCells = startPadding + days.length;
   const rows = Math.ceil(totalCells / 7);
+  const monthKey = format(monthStart, "yyyy-MM");
 
   return (
-    <div className="space-y-4">
-      {/* Calendar grid */}
+    <div className="shrink-0 w-[320px]">
+      {/* Month header */}
+      <div className="flex items-center gap-2 mb-2 px-1">
+        <h3 className="text-sm font-semibold capitalize flex-1">
+          {format(monthStart, "LLLL yyyy", { locale: ru })}
+        </h3>
+        <Link
+          href={`/projects?month=${monthKey}`}
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-dashed rounded px-2 py-1 transition-colors hover:border-foreground whitespace-nowrap"
+          title="Перейти в проекты месяца"
+        >
+          <FolderKanban className="h-3 w-3" />
+          Проекты
+        </Link>
+      </div>
+
       <div className="border rounded-lg overflow-hidden">
         {/* Weekday headers */}
         <div className="grid grid-cols-7 border-b bg-muted/30">
           {WEEKDAYS.map((d) => (
-            <div key={d} className="py-2 text-center text-xs font-semibold text-muted-foreground">
+            <div key={d} className="py-1 text-center text-xs font-semibold text-muted-foreground">
               {d}
             </div>
           ))}
@@ -104,35 +130,29 @@ export function MonthCalendar({ year, month, projects, calendarEntries, canDelet
 
         {/* Day cells */}
         <div className="grid grid-cols-7 divide-x divide-y">
-          {/* Leading empty cells */}
           {Array.from({ length: startPadding }).map((_, i) => (
-            <div key={`pad-${i}`} className="min-h-[100px] bg-muted/10 p-1" />
+            <div key={`pad-${i}`} className="min-h-[70px] bg-muted/10 p-1" />
           ))}
 
           {days.map((day) => {
-            const dayProjects = projects.filter((p) =>
-              isSameDay(new Date(p.date), day)
-            );
-            const dayEntries = calendarEntries.filter((e) =>
-              isSameDay(new Date(e.date), day)
-            );
+            const dayProjects = projects.filter((p) => isSameDay(new Date(p.date), day));
+            const dayEntries = calendarEntries.filter((e) => isSameDay(new Date(e.date), day));
             const today = isToday(day);
             const isWeekend = getDayIndex(day) >= 5;
+            const cellBgClass = getCellBgClass(dayEntries);
 
             return (
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "min-h-[100px] p-1 flex flex-col gap-0.5",
-                  today && "bg-primary/5",
-                  isWeekend && !today && "bg-muted/5"
+                  "min-h-[70px] p-0.5 flex flex-col gap-0.5",
+                  cellBgClass || (today ? "bg-primary/5" : isWeekend ? "bg-muted/5" : "")
                 )}
               >
-                {/* Date number */}
                 <div className="flex justify-end mb-0.5">
                   <span
                     className={cn(
-                      "text-xs w-6 h-6 flex items-center justify-center rounded-full font-medium",
+                      "text-xs w-5 h-5 flex items-center justify-center rounded-full font-medium",
                       today
                         ? "bg-primary text-primary-foreground font-bold"
                         : isWeekend
@@ -149,12 +169,8 @@ export function MonthCalendar({ year, month, projects, calendarEntries, canDelet
                   <Link
                     key={p.id}
                     href={`/projects/${p.id}`}
-                    className="block rounded px-1.5 py-0.5 text-xs truncate font-medium transition-opacity hover:opacity-80"
-                    style={{
-                      backgroundColor: p.calendarColor,
-                      color: "#fff",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.4)",
-                    }}
+                    className="block rounded px-1 py-0.5 text-xs truncate font-medium transition-opacity hover:opacity-80"
+                    style={{ backgroundColor: p.calendarColor, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
                     title={projectLabel(p)}
                   >
                     {projectLabel(p)}
@@ -162,46 +178,112 @@ export function MonthCalendar({ year, month, projects, calendarEntries, canDelet
                 ))}
 
                 {/* Calendar entry chips */}
-                {dayEntries.map((e) => (
-                  <div
-                    key={e.id}
-                    className="group flex items-center rounded px-1.5 py-0.5 text-xs gap-0.5"
-                    style={{ backgroundColor: e.color + "33", color: e.color, border: `1px solid ${e.color}66` }}
-                    title={e.label}
-                  >
-                    <span className="truncate flex-1">{e.label}</span>
-                    {canDelete && (
-                      <button
-                        onClick={() => deleteEntry(e.id)}
-                        disabled={deletingId === e.id}
-                        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 disabled:opacity-50"
-                        title="Удалить"
+                {dayEntries.map((e) => {
+                  const isContractEntry = e.entryType === "contract_reservation" || e.entryType === "contract_montage";
+                  if (isContractEntry && e.projectId) {
+                    return (
+                      <Link
+                        key={e.id}
+                        href={`/contracts/${e.projectId}`}
+                        className="block rounded px-1 py-0.5 text-xs truncate font-medium transition-opacity hover:opacity-80"
+                        style={{ backgroundColor: e.color, color: "#1a1a1a" }}
+                        title={e.label}
                       >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        {e.label}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <div
+                      key={e.id}
+                      className="group flex items-center rounded px-1 py-0.5 text-xs gap-0.5"
+                      style={{ backgroundColor: e.color + "33", color: e.color, border: `1px solid ${e.color}66` }}
+                      title={e.label}
+                    >
+                      <span className="truncate flex-1">{e.label}</span>
+                      {canDelete && (
+                        <button
+                          onClick={() => deleteEntry(e.id)}
+                          disabled={deletingId === e.id}
+                          className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 disabled:opacity-50"
+                          title="Удалить"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
 
-          {/* Trailing empty cells to complete last row */}
           {Array.from({ length: rows * 7 - totalCells }).map((_, i) => (
-            <div key={`trail-${i}`} className="min-h-[100px] bg-muted/10 p-1" />
+            <div key={`trail-${i}`} className="min-h-[70px] bg-muted/10 p-1" />
           ))}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Link to projects list */}
-      <div className="flex justify-center">
-        <Link
-          href={`/projects?month=${format(monthStart, "yyyy-MM")}`}
-          className="text-sm text-muted-foreground hover:text-foreground border border-dashed rounded-md px-4 py-2 transition-colors hover:border-foreground"
-        >
-          Перейти в проекты месяца
-        </Link>
+interface YearHorizontalCalendarProps {
+  year: number;
+  projects: CalendarProject[];
+  calendarEntries: CalendarEntry[];
+  canDelete?: boolean;
+}
+
+export function YearHorizontalCalendar({
+  year,
+  projects,
+  calendarEntries,
+  canDelete,
+}: YearHorizontalCalendarProps) {
+  const months = eachMonthOfInterval({
+    start: startOfYear(new Date(year, 0)),
+    end: endOfYear(new Date(year, 0)),
+  });
+
+  return (
+    <div className="overflow-x-auto pb-4">
+      <div className="flex gap-6" style={{ minWidth: "max-content" }}>
+        {months.map((monthStart) => {
+          const m = monthStart.getMonth() + 1;
+          const monthProjects = projects.filter((p) => {
+            const d = new Date(p.date);
+            return d.getFullYear() === year && d.getMonth() + 1 === m;
+          });
+          const monthEntries = calendarEntries.filter((e) => {
+            const d = new Date(e.date);
+            return d.getFullYear() === year && d.getMonth() + 1 === m;
+          });
+
+          return (
+            <SingleMonthCalendar
+              key={monthStart.toISOString()}
+              year={year}
+              month={m}
+              projects={monthProjects}
+              calendarEntries={monthEntries}
+              canDelete={canDelete}
+            />
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+// Legacy single-month export for backward compatibility
+export function MonthCalendar({ year, month, projects, calendarEntries, canDelete }: MonthCalendarProps) {
+  return (
+    <SingleMonthCalendar
+      year={year}
+      month={month}
+      projects={projects}
+      calendarEntries={calendarEntries}
+      canDelete={canDelete}
+    />
   );
 }

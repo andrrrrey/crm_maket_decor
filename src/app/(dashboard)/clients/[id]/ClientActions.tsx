@@ -145,7 +145,7 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
       <ConfirmDialog
         open={showConvertDialog}
         title="Перевести в договор?"
-        description="Клиент будет переведён в договор. Будет автоматически создан проект со статусом «Бронь»."
+        description="Клиент будет переведён в договор. Сметы будут перенесены в договор."
         confirmLabel="Перевести"
         variant="default"
         onConfirm={handleConvert}
