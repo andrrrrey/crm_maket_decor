@@ -107,7 +107,7 @@ interface Flower {
   categoryId: string | null;
   material: string | null;
   height: number | null;
-  purchaseDate: string | null;
+  yearBought: string | null;
   quantity: number;
   pricePerUnit: string | null;
   photoUrl: string | null;
@@ -122,7 +122,7 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
     name: "",
     material: "",
     height: "",
-    purchaseDate: "",
+    yearBought: "",
     quantity: "0",
     pricePerUnit: "",
   });
@@ -136,14 +136,14 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
     if (form.categoryId) fd.append("categoryId", form.categoryId);
     if (form.material) fd.append("material", form.material);
     if (form.height) fd.append("height", form.height);
-    if (form.purchaseDate) fd.append("purchaseDate", form.purchaseDate);
+    if (form.yearBought) fd.append("yearBought", form.yearBought);
     fd.append("quantity", form.quantity || "0");
     if (form.pricePerUnit) fd.append("pricePerUnit", form.pricePerUnit);
     if (photo) fd.append("photo", photo);
     await fetch("/api/flowers", { method: "POST", body: fd });
     setLoading(false);
     setShow(false);
-    setForm({ categoryId: "", name: "", material: "", height: "", purchaseDate: "", quantity: "0", pricePerUnit: "" });
+    setForm({ categoryId: "", name: "", material: "", height: "", yearBought: "", quantity: "0", pricePerUnit: "" });
     setPhoto(null);
     router.refresh();
   };
@@ -191,8 +191,8 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Дата покупки</label>
-                <input type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
+                <label className="text-xs text-muted-foreground">Год покупки</label>
+                <input type="text" placeholder="2024" value={form.yearBought} onChange={(e) => setForm({ ...form, yearBought: e.target.value })}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
               <div>
@@ -238,7 +238,7 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
     name: flower.name,
     material: flower.material ?? "",
     height: flower.height?.toString() ?? "",
-    purchaseDate: flower.purchaseDate ? flower.purchaseDate.split("T")[0] : "",
+    yearBought: flower.yearBought ?? "",
     quantity: flower.quantity.toString(),
     pricePerUnit: flower.pricePerUnit ?? "",
   });
@@ -253,7 +253,7 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
     if (form.categoryId) fd.append("categoryId", form.categoryId);
     if (form.material) fd.append("material", form.material);
     if (form.height) fd.append("height", form.height);
-    if (form.purchaseDate) fd.append("purchaseDate", form.purchaseDate);
+    if (form.yearBought) fd.append("yearBought", form.yearBought);
     fd.append("quantity", form.quantity || "0");
     if (form.pricePerUnit) fd.append("pricePerUnit", form.pricePerUnit);
     if (photo) fd.append("photo", photo);
@@ -302,8 +302,8 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Дата покупки</label>
-                <input type="date" value={form.purchaseDate} onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
+                <label className="text-xs text-muted-foreground">Год покупки</label>
+                <input type="text" placeholder="2024" value={form.yearBought} onChange={(e) => setForm({ ...form, yearBought: e.target.value })}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
               <div>

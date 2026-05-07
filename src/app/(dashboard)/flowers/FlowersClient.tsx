@@ -2,16 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Search, Flower2, ChevronRight, X } from "lucide-react";
-import { format, parseISO, isValid } from "date-fns";
-import { ru } from "date-fns/locale";
 import { AddFlowerButton, EditFlowerButton, DeleteFlowerButton, DeleteFlowerCategoryButton } from "./FlowersActions";
-
-function formatDate(val: string | null | undefined): string {
-  if (!val) return "—";
-  const d = parseISO(val);
-  if (isValid(d)) return format(d, "dd.MM.yyyy", { locale: ru });
-  return val;
-}
 
 interface FlowerCategory {
   id: string;
@@ -24,10 +15,11 @@ interface Flower {
   name: string;
   material: string | null;
   height: number | null;
-  purchaseDate: string | null;
+  yearBought: string | null;
   quantity: number;
   pricePerUnit: string | null;
   photoUrl: string | null;
+  articleNumber: string | null;
 }
 
 interface FlowersClientProps {
@@ -52,7 +44,11 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
       items = items.filter(
         (f) =>
           f.name.toLowerCase().includes(q) ||
-          f.material?.toLowerCase().includes(q)
+          f.material?.toLowerCase().includes(q) ||
+          f.yearBought?.toLowerCase().includes(q) ||
+          f.quantity.toString().includes(q) ||
+          f.articleNumber?.toLowerCase().includes(q) ||
+          (f.pricePerUnit && f.pricePerUnit.toString().includes(q))
       );
     }
     return items;
@@ -119,9 +115,10 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
                   <th className="px-3 py-2 text-right" style={{ width: "50px" }}>№</th>
                   <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Фото</th>
                   <th className="px-3 py-2 text-left">Название</th>
+                  <th className="px-3 py-2 text-left" style={{ width: "100px" }}>Артикул</th>
                   <th className="px-3 py-2 text-left" style={{ width: "120px" }}>Материал</th>
                   <th className="px-3 py-2 text-right" style={{ width: "80px" }}>Высота</th>
-                  <th className="px-3 py-2 text-left" style={{ width: "110px" }}>Дата покупки</th>
+                  <th className="px-3 py-2 text-left" style={{ width: "90px" }}>Год покупки</th>
                   <th className="px-3 py-2 text-right" style={{ width: "80px" }}>Кол-во</th>
                   <th className="px-3 py-2 text-right" style={{ width: "100px" }}>Цена за шт</th>
                   <th className="px-3 py-2 text-right" style={{ width: "110px" }}>Итого</th>
@@ -131,7 +128,7 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
               <tbody className="divide-y">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit || canDelete ? 10 : 9} className="px-3 py-6 text-center text-muted-foreground">
+                    <td colSpan={canEdit || canDelete ? 11 : 10} className="px-3 py-6 text-center text-muted-foreground">
                       {search ? "Ничего не найдено" : "Нет позиций"}
                     </td>
                   </tr>
@@ -158,9 +155,10 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
                           )}
                         </td>
                         <td className="px-3 py-2 font-medium">{flower.name}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{flower.articleNumber ?? "—"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{flower.material ?? "—"}</td>
                         <td className="px-3 py-2 text-right">{flower.height ? `${flower.height} см` : "—"}</td>
-                        <td className="px-3 py-2">{formatDate(flower.purchaseDate)}</td>
+                        <td className="px-3 py-2">{flower.yearBought ?? "—"}</td>
                         <td className="px-3 py-2 text-right font-mono">{flower.quantity}</td>
                         <td className="px-3 py-2 text-right">
                           {price !== null ? `${price.toLocaleString("ru-RU")} ₽` : "—"}

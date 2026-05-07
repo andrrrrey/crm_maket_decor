@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Package, X } from "lucide-react";
+import { Package, X, Search } from "lucide-react";
 import {
   EditFabricButton,
   EditFabricCategoryButton,
@@ -26,6 +26,7 @@ interface Fabric {
   yearBought: string | null;
   supplier: string | null;
   notes: string | null;
+  articleNumber: string | null;
 }
 
 export function FabricsClient({
@@ -45,11 +46,30 @@ export function FabricsClient({
 }) {
   const router = useRouter();
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filteredFabrics = useMemo(() => {
+    let items = currentCategoryId
+      ? fabrics.filter((f) => f.categoryId === currentCategoryId)
+      : fabrics;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      items = items.filter(
+        (f) =>
+          f.material.toLowerCase().includes(q) ||
+          f.color?.toLowerCase().includes(q) ||
+          f.supplier?.toLowerCase().includes(q) ||
+          f.yearBought?.toLowerCase().includes(q) ||
+          f.notes?.toLowerCase().includes(q) ||
+          f.articleNumber?.toLowerCase().includes(q)
+      );
+    }
+    return items;
+  }, [fabrics, currentCategoryId, search]);
 
   const selectCategory = (id: string | null) => {
     const params = new URLSearchParams();
     if (id) params.set("categoryId", id);
-    if (searchQuery) params.set("q", searchQuery);
     router.push(`/inventory/fabrics${params.toString() ? "?" + params.toString() : ""}`);
   };
 
@@ -121,9 +141,18 @@ export function FabricsClient({
         )}
 
         {/* Table */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Поиск по тканям..."
+              className="w-full pl-9 pr-4 py-2 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+            />
+          </div>
           <div className="border rounded-lg overflow-x-auto">
-            <table className="text-sm" style={{ minWidth: "900px", width: "100%" }}>
+            <table className="text-sm" style={{ minWidth: "1000px", width: "100%" }}>
               <thead>
                 <tr className="bg-muted/30 text-xs text-muted-foreground uppercase tracking-wider">
                   <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Фото</th>
@@ -132,6 +161,7 @@ export function FabricsClient({
                   <th className="px-3 py-2 text-right" style={{ width: "80px" }}>Ширина</th>
                   <th className="px-3 py-2 text-left">Отрезы</th>
                   <th className="px-3 py-2 text-right" style={{ width: "80px" }}>Длина (м)</th>
+                  <th className="px-3 py-2 text-left" style={{ width: "100px" }}>Артикул</th>
                   <th className="px-3 py-2 text-left">Год закупа</th>
                   <th className="px-3 py-2 text-left">Поставщик</th>
                   <th className="px-3 py-2 text-left" style={{ minWidth: "140px" }}>Примечание</th>
@@ -139,14 +169,14 @@ export function FabricsClient({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {fabrics.length === 0 ? (
+                {filteredFabrics.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit ? 10 : 9} className="px-3 py-6 text-center text-muted-foreground">
+                    <td colSpan={canEdit ? 11 : 10} className="px-3 py-6 text-center text-muted-foreground">
                       Данных нет
                     </td>
                   </tr>
                 ) : (
-                  fabrics.map((fabric: Fabric) => (
+                  filteredFabrics.map((fabric: Fabric) => (
                     <tr key={fabric.id} className="hover:bg-muted/10 transition-colors">
                       <td className="px-3 py-2">
                         {fabric.photoUrl ? (
@@ -180,6 +210,7 @@ export function FabricsClient({
                       <td className="px-3 py-2 text-right font-mono">
                         {fabric.totalLength ? Number(fabric.totalLength) : "—"}
                       </td>
+                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{fabric.articleNumber ?? "—"}</td>
                       <td className="px-3 py-2 text-muted-foreground">{fabric.yearBought ?? "—"}</td>
                       <td className="px-3 py-2 text-muted-foreground">{fabric.supplier ?? "—"}</td>
                       <td className="px-3 py-2 text-muted-foreground whitespace-pre-wrap break-words" style={{ minWidth: "140px" }}>

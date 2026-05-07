@@ -38,7 +38,7 @@ const NAV_ITEMS = [
   { key: "production", label: "Производство", href: "/production", icon: Factory },
   { key: "designer", label: "Дизайнер", href: "/designer", icon: Palette },
   { key: "manager", label: "Менеджер", href: "/manager", icon: User },
-  { key: "inventory", label: "Инвентарь", href: "/inventory", icon: Package },
+  { key: "inventory", label: "Склад", href: "/inventory", icon: Package },
   { key: "fabrics", label: "Ткани", href: "/inventory/fabrics", icon: Shirt },
   { key: "flowers", label: "Цветы", href: "/flowers", icon: Flower2 },
   { key: "info", label: "Инфо", href: "/info/staff", icon: Info },

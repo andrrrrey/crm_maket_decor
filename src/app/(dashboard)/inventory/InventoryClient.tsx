@@ -39,6 +39,7 @@ interface Item {
   totalDamages: number;
   categoryId: string;
   location: string | null;
+  articleNumber: string | null;
 }
 
 interface Category {
@@ -97,7 +98,14 @@ export function InventoryClient({
         (i) =>
           i.name.toLowerCase().includes(q) ||
           i.color?.toLowerCase().includes(q) ||
-          i.comment?.toLowerCase().includes(q)
+          i.comment?.toLowerCase().includes(q) ||
+          i.status?.toLowerCase().includes(q) ||
+          (STATUS_LABELS[i.status] ?? "").toLowerCase().includes(q) ||
+          i.location?.toLowerCase().includes(q) ||
+          (LOCATION_LABELS[i.location ?? ""] ?? "").toLowerCase().includes(q) ||
+          i.articleNumber?.toLowerCase().includes(q) ||
+          i.quantity.toString().includes(q) ||
+          i.totalDamages.toString().includes(q)
       );
     }
 
@@ -131,7 +139,7 @@ export function InventoryClient({
 
       <div className="flex gap-4 min-h-[500px]">
         {/* Left sidebar — wider category column */}
-        <div className="w-60 shrink-0 border rounded-lg overflow-hidden self-start">
+        <div className="w-64 shrink-0 border rounded-lg overflow-hidden self-start">
           <div className="p-2 bg-muted/30 border-b">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Категории
@@ -159,7 +167,7 @@ export function InventoryClient({
                     className="flex-1 text-left px-3 py-2 flex items-center gap-2 min-w-0"
                   >
                     <Package className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate">{cat.name}</span>
+                    <span className="break-words leading-tight">{cat.name}</span>
                   </button>
                   {canDelete && (
                     <div className="flex items-center pr-1 gap-0.5">
@@ -180,7 +188,7 @@ export function InventoryClient({
                       className="flex-1 text-left pl-7 pr-3 py-1.5 flex items-center gap-2 min-w-0"
                     >
                       <ChevronRight className="h-3 w-3 shrink-0" />
-                      <span className="truncate text-xs">{sub.name}</span>
+                      <span className="break-words text-xs leading-tight">{sub.name}</span>
                     </button>
                     {canDelete && (
                       <div className="flex items-center pr-1 gap-0.5">
@@ -208,14 +216,15 @@ export function InventoryClient({
           </div>
 
           <div className="border rounded-lg overflow-x-auto">
-            <table className="text-sm" style={{ minWidth: "900px", width: "100%" }}>
+            <table className="text-sm" style={{ minWidth: "1000px", width: "100%" }}>
               <thead>
                 <tr className="bg-muted/30 text-xs text-muted-foreground uppercase tracking-wider">
                   <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Фото</th>
                   <th className="px-3 py-2 text-left">Наименование</th>
+                  <th className="px-3 py-2 text-right" style={{ width: "80px" }}>Количество</th>
+                  <th className="px-3 py-2 text-left" style={{ width: "90px" }}>Артикул</th>
                   <th className="px-3 py-2 text-left" style={{ width: "90px" }}>Статус</th>
-                  <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Расп.</th>
-                  <th className="px-3 py-2 text-right" style={{ width: "70px" }}>Кол-во</th>
+                  <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Расп-е</th>
                   <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Цвет</th>
                   <th className="px-3 py-2 text-right" style={{ width: "70px" }}>Потери</th>
                   <th className="px-3 py-2 text-left" style={{ minWidth: "200px" }}>Комментарий</th>
@@ -225,7 +234,7 @@ export function InventoryClient({
               <tbody className="divide-y">
                 {filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit || canDelete ? 9 : 8} className="px-3 py-6 text-center text-muted-foreground">
+                    <td colSpan={canEdit || canDelete ? 10 : 9} className="px-3 py-6 text-center text-muted-foreground">
                       {search ? "Ничего не найдено" : "Нет позиций"}
                     </td>
                   </tr>
@@ -247,6 +256,8 @@ export function InventoryClient({
                         )}
                       </td>
                       <td className="px-3 py-2 font-medium">{item.name}</td>
+                      <td className="px-3 py-2 text-right font-mono">{item.quantity}</td>
+                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{item.articleNumber ?? "—"}</td>
                       <td className="px-3 py-2">
                         <span
                           className={`inline-flex px-1.5 py-0.5 rounded text-xs font-medium ${
@@ -259,7 +270,6 @@ export function InventoryClient({
                       <td className="px-3 py-2 text-xs text-muted-foreground">
                         {item.location ? LOCATION_LABELS[item.location] ?? item.location : "—"}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono">{item.quantity}</td>
                       <td className="px-3 py-2 text-muted-foreground">{item.color ?? "—"}</td>
                       <td className="px-3 py-2 text-right">
                         {item.totalDamages > 0 ? (
@@ -276,7 +286,7 @@ export function InventoryClient({
                           <div className="flex items-center gap-1 justify-end">
                             {canEdit && (
                               <>
-                                <EditItemButton item={item} />
+                                <EditItemButton item={item} categories={categories} />
                                 <DamageButton item={item} />
                               </>
                             )}

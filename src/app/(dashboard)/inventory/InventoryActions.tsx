@@ -248,11 +248,21 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
   );
 }
 
-export function EditItemButton({ item }: { item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null; location?: string | null; totalDamages?: number } }) {
+interface EditItemCategory {
+  id: string;
+  name: string;
+  children?: { id: string; name: string }[];
+}
+
+export function EditItemButton({ item, categories }: {
+  item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null; location?: string | null; totalDamages?: number; categoryId: string };
+  categories: EditItemCategory[];
+}) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
+    categoryId: item.categoryId,
     name: item.name,
     color: item.color ?? "",
     quantity: item.quantity.toString(),
@@ -272,6 +282,7 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: item.id,
+        categoryId: form.categoryId || undefined,
         name: form.name,
         color: form.color || undefined,
         quantity: Number(form.quantity),
@@ -310,6 +321,22 @@ export function EditItemButton({ item }: { item: { id: string; name: string; col
               </button>
             </div>
             <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Категория</label>
+                <select
+                  value={form.categoryId}
+                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                >
+                  <option value="">— Выберите —</option>
+                  {categories.flatMap(c => [
+                    { id: c.id, label: c.name },
+                    ...(c.children ?? []).map(ch => ({ id: ch.id, label: `${c.name} / ${ch.name}` }))
+                  ]).map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="text-xs text-muted-foreground">Название</label>
                 <input
