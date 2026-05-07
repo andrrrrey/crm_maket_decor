@@ -2,48 +2,31 @@ export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Package, X } from "lucide-react";
 import {
   AddFabricButton,
-  EditFabricButton,
   AddFabricCategoryButton,
-  EditFabricCategoryButton,
-  DeleteFabricCategoryButton,
 } from "./FabricActions";
-import { FabricSearch } from "./FabricSearch";
 import { FabricsClient } from "./FabricsClient";
 
 export default async function FabricsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; categoryId?: string };
+  searchParams: { categoryId?: string };
 }) {
   const session = await auth();
   const user = session?.user as any;
   const canEdit = user.role === "DIRECTOR" || user.role === "PRODUCTION";
   const canManageCategories = user.role === "DIRECTOR";
 
-  const search = searchParams.q?.trim();
   const categoryId = searchParams.categoryId;
 
   const [fabrics, categories] = await Promise.all([
     (prisma as any).fabric.findMany({
-      where: {
-        ...(categoryId ? { categoryId } : {}),
-        ...(search
-          ? {
-              OR: [
-                { material: { contains: search, mode: "insensitive" } },
-                { color: { contains: search, mode: "insensitive" } },
-                { supplier: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
+      where: categoryId ? { categoryId } : {},
       orderBy: [{ material: "asc" }, { color: "asc" }],
     }),
     (prisma as any).fabricCategory.findMany({
-      orderBy: { sortOrder: "asc" },
+      orderBy: { name: "asc" },
     }),
   ]);
 
@@ -54,12 +37,14 @@ export default async function FabricsPage({
           <h1 className="text-2xl font-bold">Ткани</h1>
           <p className="text-sm text-muted-foreground">{fabrics.length} позиций</p>
         </div>
-        <div className="flex items-center gap-2">
-          <FabricSearch initialQuery={search ?? ""} />
-          {canManageCategories && <AddFabricCategoryButton />}
-          {canEdit && <AddFabricButton categories={categories} />}
-        </div>
       </div>
+
+      {canEdit && (
+        <div className="flex gap-2">
+          {canManageCategories && <AddFabricCategoryButton />}
+          <AddFabricButton categories={categories} />
+        </div>
+      )}
 
       <FabricsClient
         fabrics={fabrics}
@@ -67,7 +52,7 @@ export default async function FabricsPage({
         canEdit={canEdit}
         canManageCategories={canManageCategories}
         currentCategoryId={categoryId}
-        searchQuery={search ?? ""}
+        searchQuery=""
       />
     </div>
   );

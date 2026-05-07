@@ -24,9 +24,22 @@ export default async function CalendarPage({
   const managerFilter =
     user.role === "MANAGER" ? { managerId: user.id } : {};
 
+  const monthFilter: any = {};
+  if (user.role === "PRODUCTION") {
+    const settings = await prisma.userSettings.findFirst({
+      where: { user: { role: "DIRECTOR" } },
+    });
+    const openMonths: string[] = (settings?.openMonths as string[]) ?? [];
+    if (openMonths.length > 0) {
+      monthFilter.month = { in: openMonths };
+    } else {
+      monthFilter.month = { in: [] };
+    }
+  }
+
   const [projects, calendarEntries] = await Promise.all([
     prisma.project.findMany({
-      where: { date: { gte: startDate, lt: endDate }, ...managerFilter },
+      where: { date: { gte: startDate, lt: endDate }, ...managerFilter, ...monthFilter },
       select: {
         id: true,
         number: true,

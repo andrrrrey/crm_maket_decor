@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import { AddCategoryButton, AddItemButton } from "./InventoryActions";
 import { InventoryClient } from "./InventoryClient";
 
@@ -11,7 +10,7 @@ async function getCategoriesWithItems() {
     include: {
       children: {
         select: { id: true, name: true },
-        orderBy: { sortOrder: "asc" },
+        orderBy: { name: "asc" },
       },
       items: {
         include: {
@@ -20,7 +19,7 @@ async function getCategoriesWithItems() {
         orderBy: { name: "asc" },
       },
     },
-    orderBy: { sortOrder: "asc" },
+    orderBy: { name: "asc" },
   });
 
   return categories.map((cat) => ({
@@ -38,6 +37,7 @@ async function getCategoriesWithItems() {
       comment: item.comment,
       categoryId: item.categoryId,
       location: (item as any).location ?? null,
+      articleNumber: (item as any).articleNumber ?? null,
       totalDamages: item.damages.reduce((sum, d) => sum + d.quantity, 0),
     })),
   }));
@@ -66,16 +66,8 @@ export default async function InventoryPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Инвентарь</h1>
+          <h1 className="text-2xl font-bold">Склад</h1>
           <p className="text-sm text-muted-foreground">{totalItems} позиций</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/inventory/fabrics"
-            className="px-4 py-2 border rounded-md text-sm hover:bg-accent transition-colors"
-          >
-            Ткани
-          </Link>
         </div>
       </div>
 

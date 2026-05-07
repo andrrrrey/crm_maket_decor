@@ -358,20 +358,31 @@ model InventoryCategory {
 }
 
 model InventoryItem {
-  id         String   @id @default(cuid())
-  categoryId String
-  name       String
-  color      String?
-  quantity   Int      @default(0)
-  photoUrl   String?
-  status     String   @default("site")
-  comment    String?
-  location   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  categoryId    String
+  name          String
+  color         String?
+  quantity      Int      @default(0)
+  photoUrl      String?
+  status        String   @default("site")
+  comment       String?
+  location      String?
+  articleNumber String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  category InventoryCategory @relation(fields: [categoryId], references: [id])
+  category InventoryCategory    @relation(fields: [categoryId], references: [id])
   damages  InventoryDamage[]
+  photos   InventoryItemPhoto[]
+}
+
+model InventoryItemPhoto {
+  id        String   @id @default(cuid())
+  itemId    String
+  photoUrl  String
+  createdAt DateTime @default(now())
+
+  item InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
 }
 
 model InventoryDamage {
@@ -396,19 +407,31 @@ model FlowerCategory {
 }
 
 model Flower {
-  id           String    @id @default(cuid())
-  categoryId   String?
-  name         String
-  material     String?
-  height       Int?
-  purchaseDate DateTime?
-  quantity     Int       @default(0)
-  pricePerUnit Decimal?
-  photoUrl     String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  categoryId    String?
+  name          String
+  material      String?
+  height        Int?
+  purchaseDate  DateTime?
+  yearBought    String?
+  quantity      Int       @default(0)
+  pricePerUnit  Decimal?
+  photoUrl      String?
+  articleNumber String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   category FlowerCategory? @relation(fields: [categoryId], references: [id])
+  photos   FlowerPhoto[]
+}
+
+model FlowerPhoto {
+  id        String   @id @default(cuid())
+  flowerId  String
+  photoUrl  String
+  createdAt DateTime @default(now())
+
+  flower Flower @relation(fields: [flowerId], references: [id], onDelete: Cascade)
 }
 
 // ==================== СКЛАД: ТКАНИ ====================
@@ -423,22 +446,33 @@ model FabricCategory {
 }
 
 model Fabric {
-  id          String   @id @default(cuid())
-  categoryId  String?
-  material    String
-  color       String
-  photoUrl    String?
-  width       Int?
-  cuts        String?
-  quantity    Int?
-  totalLength Decimal?
-  yearBought  String?
-  supplier    String?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  categoryId    String?
+  material      String
+  color         String
+  photoUrl      String?
+  width         Int?
+  cuts          String?
+  quantity      Int?
+  totalLength   Decimal?
+  yearBought    String?
+  supplier      String?
+  notes         String?
+  articleNumber String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   category FabricCategory? @relation(fields: [categoryId], references: [id])
+  photos   FabricPhoto[]
+}
+
+model FabricPhoto {
+  id        String   @id @default(cuid())
+  fabricId  String
+  photoUrl  String
+  createdAt DateTime @default(now())
+
+  fabric Fabric @relation(fields: [fabricId], references: [id], onDelete: Cascade)
 }
 
 // ==================== ИНФО: ПЕРСОНАЛ ====================

@@ -48,6 +48,15 @@ export function OpenMonthsSettings({ initialMonths }: OpenMonthsSettingsProps) {
     });
   };
 
+  const addNext12Months = () => {
+    const next = new Set(selected);
+    const start = startOfMonth(new Date());
+    for (let i = 0; i < 12; i++) {
+      next.add(format(addMonths(start, i), "yyyy-MM"));
+    }
+    setSelected(next);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
@@ -81,6 +90,12 @@ export function OpenMonthsSettings({ initialMonths }: OpenMonthsSettingsProps) {
             <Check className="h-3 w-3" />
           ) : null}
           {saved ? "Сохранено" : "Сохранить"}
+        </button>
+        <button
+          onClick={addNext12Months}
+          className="flex items-center gap-1.5 px-4 py-1.5 border rounded-md text-xs font-medium hover:bg-accent transition-colors"
+        >
+          +12 месяцев
         </button>
         <span className="text-xs text-muted-foreground">
           {selected.size} месяц(ев) открыто

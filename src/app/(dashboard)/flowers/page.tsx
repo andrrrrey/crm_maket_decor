@@ -14,7 +14,7 @@ export default async function FlowersPage() {
 
   const [categories, flowers] = await Promise.all([
     prisma.flowerCategory.findMany({
-      orderBy: { sortOrder: "asc" },
+      orderBy: { name: "asc" },
     }),
     prisma.flower.findMany({
       orderBy: { createdAt: "desc" },
@@ -51,10 +51,11 @@ export default async function FlowersPage() {
           name: f.name,
           material: f.material,
           height: f.height,
-          purchaseDate: f.purchaseDate?.toISOString() ?? null,
+          yearBought: (f as any).yearBought ?? null,
           quantity: f.quantity,
           pricePerUnit: f.pricePerUnit?.toString() ?? null,
           photoUrl: f.photoUrl,
+          articleNumber: (f as any).articleNumber ?? null,
         }))}
         canEdit={canEdit}
         canDelete={canDelete}

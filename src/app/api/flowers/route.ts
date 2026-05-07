@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { saveBuffer, deleteFile } from "@/lib/upload";
 
+function generateArticleNumber(): string {
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,6 +54,7 @@ export async function POST(req: NextRequest) {
       material: (formData.get("material") as string) || null,
       height: formData.get("height") ? parseInt(formData.get("height") as string) : null,
       purchaseDate: formData.get("purchaseDate") ? new Date(formData.get("purchaseDate") as string) : null,
+      yearBought: (formData.get("yearBought") as string) || null,
       quantity: parseInt((formData.get("quantity") as string) || "0"),
       pricePerUnit: formData.get("pricePerUnit") ? parseFloat(formData.get("pricePerUnit") as string) : null,
     };
@@ -74,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     const flower = await prisma.flower.create({
-      data: { ...fields, ...(photoUrl ? { photoUrl } : {}) },
+      data: { ...fields, ...(photoUrl ? { photoUrl } : {}), articleNumber: generateArticleNumber() } as any,
     });
     return NextResponse.json({ data: flower }, { status: 201 });
   }

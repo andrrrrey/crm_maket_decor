@@ -61,7 +61,9 @@ export default async function ContractPage({
 
   if (!contract) notFound();
 
-  const canEdit = user.role === "DIRECTOR" || user.role === "MANAGER";
+  const isOwnContract = contract.managerId === user.id;
+  const canSeeFinancials = user.role === "DIRECTOR" || (user.role === "MANAGER" && isOwnContract);
+  const canEdit = user.role === "DIRECTOR" || (user.role === "MANAGER" && isOwnContract);
   const canView = user.role === "DIRECTOR" || user.role === "MANAGER" || user.role === "PRODUCTION";
 
   const contractFiles = contract.contractFiles.filter((f) => f.fileType === "contract");
@@ -197,35 +199,41 @@ export default async function ContractPage({
               <dt className="text-muted-foreground">Площадка</dt>
               <dd>{contract.venue ?? "—"}</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Общая сумма</dt>
-              <dd>
-                {contract.totalAmount
-                  ? `${Number(contract.totalAmount).toLocaleString("ru-RU")} ₽`
-                  : "—"}
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Предоплата</dt>
-              <dd>
-                {contract.prepaymentAmount
-                  ? `${Number(contract.prepaymentAmount).toLocaleString("ru-RU")} ₽`
-                  : "—"}
-                {contract.prepaymentDate && ` (${formatStringDate(contract.prepaymentDate)})`}
-              </dd>
-            </div>
+            {canSeeFinancials && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Общая сумма</dt>
+                <dd>
+                  {contract.totalAmount
+                    ? `${Number(contract.totalAmount).toLocaleString("ru-RU")} ₽`
+                    : "—"}
+                </dd>
+              </div>
+            )}
+            {canSeeFinancials && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Предоплата</dt>
+                <dd>
+                  {contract.prepaymentAmount
+                    ? `${Number(contract.prepaymentAmount).toLocaleString("ru-RU")} ₽`
+                    : "—"}
+                  {contract.prepaymentDate && ` (${formatStringDate(contract.prepaymentDate)})`}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-muted-foreground">№ счёта</dt>
               <dd>{contract.invoiceNumber ?? "—"}</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Сумма орг</dt>
-              <dd>
-                {contract.orgAmount
-                  ? `${Number(contract.orgAmount).toLocaleString("ru-RU")} ₽`
-                  : "—"}
-              </dd>
-            </div>
+            {canSeeFinancials && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Сумма орг</dt>
+                <dd>
+                  {contract.orgAmount
+                    ? `${Number(contract.orgAmount).toLocaleString("ru-RU")} ₽`
+                    : "—"}
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
 
@@ -245,26 +253,28 @@ export default async function ContractPage({
       )}
 
       {/* Файлы */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 rounded-lg border bg-card">
-          <h2 className="text-sm font-semibold mb-3">Сметы</h2>
-          <FileListWithDelete
-            files={contract.estimates.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
-            canDelete={canEdit}
-            deleteUrl={`/api/contracts/${contract.id}/files`}
-          />
+      {canSeeFinancials && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-lg border bg-card">
+            <h2 className="text-sm font-semibold mb-3">Сметы</h2>
+            <FileListWithDelete
+              files={contract.estimates.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
+              canDelete={canEdit}
+              deleteUrl={`/api/contracts/${contract.id}/files`}
+            />
+          </div>
+          <div className="p-4 rounded-lg border bg-card">
+            <h2 className="text-sm font-semibold mb-3">Файлы договора</h2>
+            <FileListWithDelete
+              files={contractFiles.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
+              canDelete={canEdit}
+              deleteUrl={`/api/contracts/${contract.id}/files`}
+            />
+          </div>
         </div>
-        <div className="p-4 rounded-lg border bg-card">
-          <h2 className="text-sm font-semibold mb-3">Файлы договора</h2>
-          <FileListWithDelete
-            files={contractFiles.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
-            canDelete={canEdit}
-            deleteUrl={`/api/contracts/${contract.id}/files`}
-          />
-        </div>
-      </div>
+      )}
 
-      {invoiceFiles.length > 0 && (
+      {canSeeFinancials && invoiceFiles.length > 0 && (
         <div className="p-4 rounded-lg border bg-card">
           <h2 className="text-sm font-semibold mb-3">Счета</h2>
           <FileListWithDelete

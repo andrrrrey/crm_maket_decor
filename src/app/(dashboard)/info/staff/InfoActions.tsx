@@ -157,6 +157,7 @@ export function EditStaffButton({ person }: { person: StaffData }) {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
+    section: person.section,
     fullName: person.fullName,
     position: person.position,
     phone: person.phone ?? "",
@@ -176,6 +177,7 @@ export function EditStaffButton({ person }: { person: StaffData }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: person.id,
+        section: form.section,
         fullName: form.fullName,
         position: form.position,
         phone: form.phone || undefined,
@@ -207,6 +209,12 @@ export function EditStaffButton({ person }: { person: StaffData }) {
               <button onClick={() => setEditing(false)} className="p-1 hover:bg-accent rounded"><X className="h-4 w-4" /></button>
             </div>
             <div className="space-y-3">
+              <div>
+                <label className={labelClass}>Категория</label>
+                <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} className={inputClass}>
+                  {SECTIONS.map((s) => <option key={s} value={s}>{STAFF_SECTION_LABELS[s]}</option>)}
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>ФИО</label>
