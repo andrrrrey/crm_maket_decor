@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { logAction, Actions } from "@/lib/logger";
 import { z } from "zod";
 
+function generateArticleNumber(): string {
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
 const createSchema = z.object({
   material: z.string().min(1),
   color: z.string().min(1),
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const fabric = await (prisma as any).fabric.create({ data: parsed.data });
+  const fabric = await (prisma as any).fabric.create({ data: { ...parsed.data, articleNumber: generateArticleNumber() } });
   await logAction(user.id, Actions.FABRIC_CREATE, "fabric", fabric.id, {
     material: fabric.material,
     color: fabric.color,

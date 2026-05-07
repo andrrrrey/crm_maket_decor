@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { logAction, Actions } from "@/lib/logger";
 import { z } from "zod";
 
+function generateArticleNumber(): string {
+  return Math.floor(10000 + Math.random() * 90000).toString();
+}
+
 const createItemSchema = z.object({
   categoryId: z.string(),
   name: z.string().min(1),
@@ -23,6 +27,7 @@ const updateItemSchema = z.object({
   location: z.string().optional(),
   damageQuantity: z.number().optional(),
   damageDescription: z.string().optional(),
+  categoryId: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -68,13 +73,20 @@ export async function POST(req: NextRequest) {
           description: data.damageDescription,
         },
       });
-      // Уменьшить количество
+      // Уменьшить количество и обновить остальные поля
       await prisma.inventoryItem.update({
         where: { id: data.id },
         data: {
           quantity: { decrement: data.damageQuantity },
+          ...(data.name && { name: data.name }),
+          ...(data.color !== undefined && { color: data.color }),
+          ...(data.status !== undefined && { status: data.status }),
+          ...(data.comment !== undefined && { comment: data.comment }),
+          ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
+          ...(data.location !== undefined && { location: data.location } as any),
+          ...(data.categoryId && { categoryId: data.categoryId }),
         },
-      });
+      } as any);
       await logAction(user.id, Actions.INVENTORY_DAMAGE, "inventory", data.id, {
         quantity: data.damageQuantity,
         description: data.damageDescription,
@@ -92,6 +104,7 @@ export async function POST(req: NextRequest) {
         ...(data.comment !== undefined && { comment: data.comment }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
         ...(data.location !== undefined && { location: data.location } as any),
+        ...(data.categoryId && { categoryId: data.categoryId }),
       },
     } as any);
     await logAction(user.id, Actions.INVENTORY_UPDATE, "inventory", data.id);
@@ -111,7 +124,8 @@ export async function POST(req: NextRequest) {
       color: parsed.data.color,
       quantity: parsed.data.quantity,
       photoUrl: parsed.data.photoUrl,
-    },
+      articleNumber: generateArticleNumber(),
+    } as any,
   });
   await logAction(user.id, Actions.INVENTORY_CREATE, "inventory", item.id, { name: item.name });
   return NextResponse.json({ data: item }, { status: 201 });
