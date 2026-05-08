@@ -114,6 +114,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  await prisma.calendarEntry.deleteMany({ where: { projectId: params.id } });
   await prisma.client.delete({ where: { id: params.id } });
   await logAction(user.id, Actions.CLIENT_DELETE, "client", params.id, {
     clientName: existing.clientName,

@@ -30,14 +30,20 @@ export default async function ClientPage({
   const session = await auth();
   const user = session?.user as any;
 
-  const client = await prisma.client.findUnique({
-    where: { id: params.id },
-    include: {
-      manager: { select: { id: true, name: true } },
-      estimates: { orderBy: { version: "asc" } },
-      contract: { select: { id: true, contractNumber: true } },
-    },
-  });
+  const [client, existingReservation] = await Promise.all([
+    prisma.client.findUnique({
+      where: { id: params.id },
+      include: {
+        manager: { select: { id: true, name: true } },
+        estimates: { orderBy: { version: "asc" } },
+        contract: { select: { id: true, contractNumber: true } },
+      },
+    }),
+    prisma.calendarEntry.findFirst({
+      where: { projectId: params.id, entryType: "client_reservation" },
+      select: { id: true },
+    }),
+  ]);
 
   if (!client) notFound();
 
@@ -102,7 +108,12 @@ export default async function ClientPage({
                 isRejected: client.isRejected,
               }}
             />
-            <ClientActions client={client} userId={user.id} userRole={user.role} />
+            <ClientActions
+              client={{ ...client, projectDate: client.projectDate?.toISOString() ?? null }}
+              userId={user.id}
+              userRole={user.role}
+              hasReservation={!!existingReservation}
+            />
           </div>
         )}
       </div>

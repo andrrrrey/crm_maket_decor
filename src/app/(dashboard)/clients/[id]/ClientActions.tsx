@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, X, Trash2, Upload } from "lucide-react";
+import { ArrowRight, X, Trash2, Upload, CalendarCheck } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
@@ -13,12 +13,14 @@ interface ClientActionsProps {
     isRejected: boolean;
     contract: { id: string } | null;
     managerId: string;
+    projectDate?: string | null;
   };
   userId: string;
   userRole: string;
+  hasReservation: boolean;
 }
 
-export function ClientActions({ client, userId, userRole }: ClientActionsProps) {
+export function ClientActions({ client, userId, userRole, hasReservation }: ClientActionsProps) {
   const router = useRouter();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
@@ -27,10 +29,20 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
   const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [isTeamVersion, setIsTeamVersion] = useState(false);
+  const [reserved, setReserved] = useState(hasReservation);
 
   const canDelete =
     userRole === "DIRECTOR" ||
     (userRole === "MANAGER" && client.managerId === userId);
+
+  const handleReserve = async () => {
+    setLoading(true);
+    const res = await fetch(`/api/clients/${client.id}/reserve`, { method: "POST" });
+    const data = await res.json();
+    setLoading(false);
+    if (data.data !== undefined) setReserved(data.data.reserved);
+    router.refresh();
+  };
 
   const handleDelete = async () => {
     setLoading(true);
@@ -91,6 +103,24 @@ export function ClientActions({ client, userId, userRole }: ClientActionsProps) 
         <Upload className="h-3.5 w-3.5" />
         Смету
       </button>
+
+      {/* Бронь */}
+      {!client.isRejected && !client.contract && (
+        <button
+          onClick={handleReserve}
+          disabled={loading || !client.projectDate}
+          title={client.projectDate ? (reserved ? "Снять бронь с календаря" : "Добавить бронь в календарь") : "Укажите дату мероприятия"}
+          className={
+            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border bg-background text-sm font-medium transition-colors disabled:opacity-50 " +
+            (reserved
+              ? "text-green-700 dark:text-green-400 border-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100"
+              : "hover:bg-accent")
+          }
+        >
+          <CalendarCheck className="h-3.5 w-3.5" />
+          Бронь
+        </button>
+      )}
 
       {/* В договор */}
       {!client.contract && !client.isRejected && (
