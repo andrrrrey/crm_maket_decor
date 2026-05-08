@@ -34,10 +34,6 @@ export default async function CalendarPage({
 
   // Production with no open months — show nothing
   if (openMonthsFilter !== null && openMonthsFilter.length === 0) {
-    const calendarEntries = await prisma.calendarEntry.findMany({
-      where: { date: { gte: startDate, lt: endDate } },
-      orderBy: { date: "asc" },
-    });
     const prevYear = year - 1;
     const nextYear = year + 1;
     return (
@@ -50,14 +46,17 @@ export default async function CalendarPage({
             <Link href={`/calendar?year=${nextYear}`} className="p-2 rounded-md hover:bg-accent transition-colors"><ChevronRight className="h-4 w-4" /></Link>
           </div>
         </div>
-        <YearHorizontalCalendar year={year} projects={[]} calendarEntries={calendarEntries.map((e) => ({ ...e, date: e.date.toISOString(), projectId: e.projectId ?? null }))} canDelete={false} />
+        <YearHorizontalCalendar year={year} projects={[]} calendarEntries={[]} canDelete={false} />
       </div>
     );
   }
 
   const monthFilter: any = openMonthsFilter ? { month: { in: openMonthsFilter } } : {};
 
-  const [projects, calendarEntries] = await Promise.all([
+  // For Production: build a set of allowed months to filter calendarEntries too
+  const allowedMonthKeys = openMonthsFilter ? new Set(openMonthsFilter) : null;
+
+  const [projects, allCalendarEntries] = await Promise.all([
     prisma.project.findMany({
       where: { date: { gte: startDate, lt: endDate }, ...managerFilter, ...monthFilter },
       select: {
@@ -80,6 +79,16 @@ export default async function CalendarPage({
       orderBy: { date: "asc" },
     }),
   ]);
+
+  // Filter contract calendar entries by open months for Production role
+  const calendarEntries = allowedMonthKeys
+    ? allCalendarEntries.filter((e) => {
+        const isContractEntry = e.entryType === "contract_reservation" || e.entryType === "contract_montage";
+        if (!isContractEntry) return true;
+        const monthKey = format(e.date, "yyyy-MM");
+        return allowedMonthKeys.has(monthKey);
+      })
+    : allCalendarEntries;
 
   const prevYear = year - 1;
   const nextYear = year + 1;
