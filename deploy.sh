@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Load nvm / node if not in PATH
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+# Fallback: common node install paths
+for p in /usr/local/bin /usr/bin ~/.local/bin; do
+  [ -x "$p/npm" ] && export PATH="$p:$PATH" && break
+done
+
 cd /home/deploy/crm_maket_decor
 
 echo "[1/6] git pull..."
