@@ -1,33 +1,31 @@
 #!/bin/bash
 set -e
 
-# Load nvm / node if not in PATH
-export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-# Fallback: common node install paths
-for p in /usr/local/bin /usr/bin ~/.local/bin; do
-  [ -x "$p/npm" ] && export PATH="$p:$PATH" && break
-done
-
 cd /home/deploy/crm_maket_decor
 
-echo "[1/6] git pull..."
+echo "[1/5] git pull..."
 git pull
 
-echo "[2/6] npm ci..."
-npm ci --legacy-peer-deps
+echo "[2/5] npm ci + build (incremental)..."
+# node:20 (Debian) — не нужны apk-пакеты, npm/node уже есть
+# crm_npm_cache  — кеш пакетов, сохраняется между деплоями
+# crm_next_cache — кеш компиляции Next.js, сохраняется между деплоями
+docker run --rm \
+  -v "$(pwd):/app" \
+  -v "crm_npm_cache:/root/.npm" \
+  -v "crm_next_cache:/app/.next/cache" \
+  -e NEXT_TELEMETRY_DISABLED=1 \
+  -w /app \
+  node:20 \
+  bash -c "npm ci --legacy-peer-deps && npx prisma generate && npm run build"
 
-echo "[3/6] prisma generate..."
-npx prisma generate
-
-echo "[4/6] npm run build (incremental)..."
-NEXT_TELEMETRY_DISABLED=1 npm run build
-
-echo "[5/6] docker compose build + deploy..."
+echo "[3/5] docker compose build..."
 docker compose build app worker
+
+echo "[4/5] deploy..."
 docker compose up -d --force-recreate app worker
 
-echo "[6/6] prisma migrate deploy..."
+echo "[5/5] migrate..."
 docker compose exec -T app npx prisma migrate deploy
 
 echo "✅ Done!"
