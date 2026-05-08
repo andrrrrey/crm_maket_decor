@@ -41,7 +41,7 @@ export function OpenMonthsSettings({ initialMonths }: OpenMonthsSettingsProps) {
       await fetch("/api/settings/open-months", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ openMonths: Array.from(selected) }),
+        body: JSON.stringify({ months: Array.from(selected) }),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
