@@ -1,66 +1,32 @@
 # syntax=docker/dockerfile:1
-
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
+# No build here — app is pre-built on the host via deploy.sh
+FROM node:20-alpine
 RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps
-
-# Stage 2: Builder
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN mkdir -p /app/public
-RUN npx prisma generate
-RUN --mount=type=cache,target=/app/.next/cache \
-    npm run build
-
-# Stage 3: Runner
-FROM node:20-alpine AS runner
-RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PRISMA_ENGINES_MIRROR=skip
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Install production deps only (cached layer — reruns only if package.json changes)
+COPY package.json package-lock.json* ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps --omit=dev
 
-# Copy public assets
-COPY --from=builder /app/public ./public
+# Generate Prisma client for Alpine/Linux (cached layer — reruns only if schema changes)
+COPY prisma ./prisma
+RUN npx prisma generate
 
-# Copy standalone build
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy pre-built Next.js output (this layer reruns on every deploy — ~5s)
+COPY .next ./.next
+COPY public ./public
+COPY server.js worker.js ./
 
-# Copy Prisma files and seed dependencies
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package.json ./package.json
-
-# Copy all node_modules (needed for server.js/worker.js runtime deps
-# like socket.io, ioredis, bullmq, nodemailer, imap, mailparser etc.
-# which are not included in Next.js standalone output)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-
-# Copy server and worker
-COPY --from=builder /app/server.js ./server.js
-COPY --from=builder /app/worker.js ./worker.js
-
-# Create uploads directory
-RUN mkdir -p /app/uploads/estimates /app/uploads/contracts /app/uploads/invoices \
-    /app/uploads/mockups /app/uploads/projects /app/uploads/inventory
-
-RUN chown -R nextjs:nodejs /app/uploads
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p uploads/estimates uploads/contracts uploads/invoices \
+             uploads/mockups uploads/projects uploads/inventory && \
+    chown -R nextjs:nodejs /app
 
 USER nextjs
-
 EXPOSE 3000
-
 CMD ["node", "server.js"]
