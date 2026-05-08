@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Pencil, Trash2 } from "lucide-react";
+import { Plus, X, Pencil, Trash2, Save } from "lucide-react";
 
 interface Category {
   id: string;
@@ -66,6 +66,72 @@ export function AddFlowerCategoryButton() {
                 className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
                 Создать
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function EditFlowerCategoryButton({ category }: { category: Category }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(category.name);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setLoading(true);
+    await fetch("/api/flowers/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: category.id, name: name.trim() }),
+    });
+    setLoading(false);
+    setEditing(false);
+    router.refresh();
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setEditing(true)}
+        className="p-1 rounded hover:bg-accent transition-colors text-muted-foreground"
+        title="Переименовать категорию"
+      >
+        <Pencil className="h-3 w-3" />
+      </button>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg p-6 w-full max-w-sm shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Переименовать категорию</h3>
+              <button onClick={() => setEditing(false)} className="p-1 hover:bg-accent rounded">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Название</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                autoFocus
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors">Отмена</button>
+              <button
+                onClick={handleSave}
+                disabled={loading || !name.trim()}
+                className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Сохранить
               </button>
             </div>
           </div>

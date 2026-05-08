@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Search, Package, ChevronRight, X } from "lucide-react";
-import { EditItemButton, DamageButton, DeleteItemButton, DeleteCategoryButton, EditCategoryButton } from "./InventoryActions";
+import { EditItemButton, DeleteItemButton, DeleteCategoryButton, EditCategoryButton } from "./InventoryActions";
 
 const STATUS_LABELS: Record<string, string> = {
   site: "Сайт",
@@ -285,10 +285,7 @@ export function InventoryClient({
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1 justify-end">
                             {canEdit && (
-                              <>
-                                <EditItemButton item={item} categories={categories} />
-                                <DamageButton item={item} />
-                              </>
+                              <EditItemButton item={item} categories={categories} />
                             )}
                             {canDelete && <DeleteItemButton item={item} />}
                           </div>

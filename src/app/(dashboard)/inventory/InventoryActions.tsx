@@ -261,22 +261,29 @@ export function EditItemButton({ item, categories }: {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const initTotalDamages = item.totalDamages ?? 0;
+  const initTotalQuantity = item.quantity + initTotalDamages;
+
   const [form, setForm] = useState({
     categoryId: item.categoryId,
     name: item.name,
     color: item.color ?? "",
-    quantity: item.quantity.toString(),
+    totalQuantity: initTotalQuantity.toString(),
+    totalDamages: initTotalDamages.toString(),
     status: item.status ?? "site",
     comment: item.comment ?? "",
     location: item.location ?? "",
-    addLosses: "",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  const availableQty = Math.max(0, Number(form.totalQuantity) - Number(form.totalDamages));
 
   const handleSave = async () => {
     setLoading(true);
     let photoUrl: string | undefined;
     if (photoFile) photoUrl = await uploadPhoto(photoFile);
+    const losses = Math.max(0, Number(form.totalDamages) || 0);
     await fetch("/api/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -285,13 +292,11 @@ export function EditItemButton({ item, categories }: {
         categoryId: form.categoryId || undefined,
         name: form.name,
         color: form.color || undefined,
-        quantity: Number(form.quantity),
+        quantity: availableQty,
+        setTotalDamages: losses,
         status: form.status,
         comment: form.comment || undefined,
         location: form.location || undefined,
-        ...(form.addLosses && Number(form.addLosses) > 0 && {
-          damageQuantity: Number(form.addLosses),
-        }),
         ...(photoUrl !== undefined && { photoUrl }),
       }),
     });
@@ -347,6 +352,28 @@ export function EditItemButton({ item, categories }: {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="text-xs text-muted-foreground">Всего (шт)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.totalQuantity}
+                    onChange={(e) => setForm({ ...form, totalQuantity: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Потери (шт)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.totalDamages}
+                    onChange={(e) => setForm({ ...form, totalDamages: e.target.value })}
+                    className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="text-xs text-muted-foreground">Цвет</label>
                   <input
                     value={form.color}
@@ -355,13 +382,10 @@ export function EditItemButton({ item, categories }: {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">Количество</label>
-                  <input
-                    type="number"
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
-                  />
+                  <label className="text-xs text-muted-foreground">Доступно (шт)</label>
+                  <div className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-muted/30 text-muted-foreground font-mono">
+                    {availableQty}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -389,19 +413,6 @@ export function EditItemButton({ item, categories }: {
                     <option value="warehouse">Склад</option>
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">
-                  Добавить потери{item.totalDamages ? ` (текущие: ${item.totalDamages})` : ""}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.addLosses}
-                  onChange={(e) => setForm({ ...form, addLosses: e.target.value })}
-                  placeholder="0"
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
-                />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Комментарий</label>

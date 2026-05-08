@@ -28,6 +28,7 @@ const updateItemSchema = z.object({
   damageQuantity: z.number().optional(),
   damageDescription: z.string().optional(),
   categoryId: z.string().optional(),
+  setTotalDamages: z.number().min(0).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -63,6 +64,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
     const data = parsed.data;
+
+    // Установить абсолютное значение потерь
+    if (data.setTotalDamages !== undefined) {
+      const current = await prisma.inventoryItem.findUnique({
+        where: { id: data.id },
+        include: { damages: { select: { quantity: true } } },
+      });
+      if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+      const currentTotalDamages = current.damages.reduce((s, d) => s + d.quantity, 0);
+      const originalQuantity = current.quantity + currentTotalDamages;
+      const newQuantity = Math.max(0, originalQuantity - data.setTotalDamages);
+
+      await prisma.inventoryDamage.deleteMany({ where: { itemId: data.id } });
+      if (data.setTotalDamages > 0) {
+        await prisma.inventoryDamage.create({
+          data: { itemId: data.id, quantity: data.setTotalDamages },
+        });
+      }
+
+      const item = await prisma.inventoryItem.update({
+        where: { id: data.id },
+        data: {
+          quantity: newQuantity,
+          ...(data.name && { name: data.name }),
+          ...(data.color !== undefined && { color: data.color }),
+          ...(data.status !== undefined && { status: data.status }),
+          ...(data.comment !== undefined && { comment: data.comment }),
+          ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
+          ...(data.location !== undefined && { location: data.location } as any),
+          ...(data.categoryId && { categoryId: data.categoryId }),
+        },
+      } as any);
+      await logAction(user.id, Actions.INVENTORY_DAMAGE, "inventory", data.id, {
+        quantity: data.setTotalDamages,
+      });
+      return NextResponse.json({ data: item });
+    }
 
     if (data.damageQuantity) {
       // Добавить запись об убытке
