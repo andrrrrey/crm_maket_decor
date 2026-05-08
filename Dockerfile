@@ -1,10 +1,13 @@
+# syntax=docker/dockerfile:1
+
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -15,7 +18,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN mkdir -p /app/public
 RUN npx prisma generate
-RUN npm run build
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
