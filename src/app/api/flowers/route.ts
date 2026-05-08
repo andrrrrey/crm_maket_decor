@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
     const fields = {
       categoryId: (formData.get("categoryId") as string) || null,
       name: (formData.get("name") as string) || "",
+      color: (formData.get("color") as string) || null,
       material: (formData.get("material") as string) || null,
       height: formData.get("height") ? parseInt(formData.get("height") as string) : null,
       purchaseDate: formData.get("purchaseDate") ? new Date(formData.get("purchaseDate") as string) : null,

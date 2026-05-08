@@ -13,6 +13,7 @@ interface Flower {
   id: string;
   categoryId: string | null;
   name: string;
+  color: string | null;
   material: string | null;
   height: number | null;
   yearBought: string | null;
@@ -44,6 +45,7 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
       items = items.filter(
         (f) =>
           f.name.toLowerCase().includes(q) ||
+          f.color?.toLowerCase().includes(q) ||
           f.material?.toLowerCase().includes(q) ||
           f.yearBought?.toLowerCase().includes(q) ||
           f.quantity.toString().includes(q) ||
@@ -114,12 +116,13 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
           </div>
 
           <div className="border rounded-lg overflow-x-auto">
-            <table className="text-sm" style={{ minWidth: "900px", width: "100%" }}>
+            <table className="text-sm" style={{ minWidth: "980px", width: "100%" }}>
               <thead>
                 <tr className="bg-muted/30 text-xs text-muted-foreground uppercase tracking-wider">
                   <th className="px-3 py-2 text-right" style={{ width: "50px" }}>№</th>
                   <th className="px-3 py-2 text-left" style={{ width: "80px" }}>Фото</th>
                   <th className="px-3 py-2 text-left">Название</th>
+                  <th className="px-3 py-2 text-left" style={{ width: "110px" }}>Цвет</th>
                   <th className="px-3 py-2 text-left" style={{ width: "100px" }}>Артикул</th>
                   <th className="px-3 py-2 text-left" style={{ width: "120px" }}>Материал</th>
                   <th className="px-3 py-2 text-right" style={{ width: "80px" }}>Высота</th>
@@ -133,7 +136,7 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
               <tbody className="divide-y">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit || canDelete ? 11 : 10} className="px-3 py-6 text-center text-muted-foreground">
+                    <td colSpan={canEdit || canDelete ? 12 : 11} className="px-3 py-6 text-center text-muted-foreground">
                       {search ? "Ничего не найдено" : "Нет позиций"}
                     </td>
                   </tr>
@@ -160,6 +163,7 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
                           )}
                         </td>
                         <td className="px-3 py-2 font-medium">{flower.name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{flower.color ?? "—"}</td>
                         <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{flower.articleNumber ?? "—"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{flower.material ?? "—"}</td>
                         <td className="px-3 py-2 text-right">{flower.height ? `${flower.height} см` : "—"}</td>

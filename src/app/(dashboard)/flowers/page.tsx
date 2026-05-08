@@ -49,6 +49,7 @@ export default async function FlowersPage() {
           id: f.id,
           categoryId: f.categoryId,
           name: f.name,
+          color: (f as any).color ?? null,
           material: f.material,
           height: f.height,
           yearBought: (f as any).yearBought ?? null,

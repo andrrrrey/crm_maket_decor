@@ -52,7 +52,7 @@ export default async function SettingsPage() {
           <div>
             <h2 className="text-sm font-semibold">Открытые месяцы для производства</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Производство видит только проекты в открытых месяцах
+              Производство видит только договоры в открытых месяцах
             </p>
           </div>
           <OpenMonthsSettings initialMonths={openMonths} />

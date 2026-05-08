@@ -171,6 +171,7 @@ interface Flower {
   id: string;
   name: string;
   categoryId: string | null;
+  color: string | null;
   material: string | null;
   height: number | null;
   yearBought: string | null;
@@ -186,6 +187,7 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
   const [form, setForm] = useState({
     categoryId: "",
     name: "",
+    color: "",
     material: "",
     height: "",
     yearBought: "",
@@ -200,6 +202,7 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
     const fd = new FormData();
     fd.append("name", form.name.trim());
     if (form.categoryId) fd.append("categoryId", form.categoryId);
+    if (form.color) fd.append("color", form.color);
     if (form.material) fd.append("material", form.material);
     if (form.height) fd.append("height", form.height);
     if (form.yearBought) fd.append("yearBought", form.yearBought);
@@ -209,7 +212,7 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
     await fetch("/api/flowers", { method: "POST", body: fd });
     setLoading(false);
     setShow(false);
-    setForm({ categoryId: "", name: "", material: "", height: "", yearBought: "", quantity: "0", pricePerUnit: "" });
+    setForm({ categoryId: "", name: "", color: "", material: "", height: "", yearBought: "", quantity: "0", pricePerUnit: "" });
     setPhoto(null);
     router.refresh();
   };
@@ -245,6 +248,11 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
                   <option value="">— Без категории —</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Цвет</label>
+                <input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Материал</label>
@@ -302,6 +310,7 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
   const [form, setForm] = useState({
     categoryId: flower.categoryId ?? "",
     name: flower.name,
+    color: flower.color ?? "",
     material: flower.material ?? "",
     height: flower.height?.toString() ?? "",
     yearBought: flower.yearBought ?? "",
@@ -317,6 +326,7 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
     fd.append("id", flower.id);
     fd.append("name", form.name.trim());
     if (form.categoryId) fd.append("categoryId", form.categoryId);
+    if (form.color) fd.append("color", form.color);
     if (form.material) fd.append("material", form.material);
     if (form.height) fd.append("height", form.height);
     if (form.yearBought) fd.append("yearBought", form.yearBought);
@@ -356,6 +366,11 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
                   <option value="">— Без категории —</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Цвет</label>
+                <input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Материал</label>
