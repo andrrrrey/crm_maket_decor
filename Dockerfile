@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # No build here — app is pre-built on the host via deploy.sh
-FROM node:20-alpine
+FROM node:20-alpine AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
