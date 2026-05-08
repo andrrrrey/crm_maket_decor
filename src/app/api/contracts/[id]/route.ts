@@ -186,6 +186,9 @@ export async function DELETE(
     });
   }
 
+  // Remove calendar entries linked to this contract before deleting it
+  await prisma.calendarEntry.deleteMany({ where: { projectId: params.id } });
+
   await prisma.contract.delete({ where: { id: params.id } });
   await logAction(user.id, Actions.CONTRACT_DELETE, "contract", params.id, {
     clientName: existing.clientName,
