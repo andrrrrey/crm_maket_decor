@@ -24,6 +24,7 @@ docker compose build app worker
 
 echo "[4/5] deploy..."
 docker compose up -d --force-recreate app worker
+docker compose up -d nginx
 
 echo "[5/5] migrate..."
 docker compose exec -T app npx prisma migrate deploy
