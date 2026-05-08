@@ -19,6 +19,7 @@ RUN npx prisma generate
 # Copy pre-built Next.js output (this layer reruns on every deploy — ~5s)
 COPY .next ./.next
 COPY public ./public
+COPY next.config.js ./
 COPY server.js worker.js ./
 
 RUN addgroup --system --gid 1001 nodejs && \
