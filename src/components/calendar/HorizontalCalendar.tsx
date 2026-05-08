@@ -197,15 +197,29 @@ function SingleMonthCalendar({
                   const isContractEntry = e.entryType === "contract_reservation" || e.entryType === "contract_montage";
                   if (isContractEntry && e.projectId) {
                     return (
-                      <Link
+                      <div
                         key={e.id}
-                        href={`/contracts/${e.projectId}`}
-                        className="block rounded px-1 py-0.5 text-xs truncate font-medium transition-opacity hover:opacity-80"
+                        className="group flex items-center rounded px-1 py-0.5 text-xs gap-0.5 font-medium"
                         style={{ backgroundColor: e.color, color: "#1a1a1a" }}
                         title={e.label}
                       >
-                        {e.label}
-                      </Link>
+                        <Link
+                          href={`/contracts/${e.projectId}`}
+                          className="truncate flex-1 hover:opacity-80 transition-opacity"
+                        >
+                          {e.label}
+                        </Link>
+                        {canDelete && (
+                          <button
+                            onClick={() => deleteEntry(e.id)}
+                            disabled={deletingId === e.id}
+                            className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-700 disabled:opacity-50"
+                            title="Удалить"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        )}
+                      </div>
                     );
                   }
                   return (
