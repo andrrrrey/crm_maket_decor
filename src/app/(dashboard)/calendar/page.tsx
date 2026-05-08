@@ -24,18 +24,38 @@ export default async function CalendarPage({
   const managerFilter =
     user.role === "MANAGER" ? { managerId: user.id } : {};
 
-  const monthFilter: any = {};
+  let openMonthsFilter: string[] | null = null;
   if (user.role === "PRODUCTION") {
     const settings = await prisma.userSettings.findFirst({
       where: { user: { role: "DIRECTOR" } },
     });
-    const openMonths: string[] = (settings?.openMonths as string[]) ?? [];
-    if (openMonths.length > 0) {
-      monthFilter.month = { in: openMonths };
-    } else {
-      monthFilter.month = { in: [] };
-    }
+    openMonthsFilter = (settings?.openMonths as string[]) ?? [];
   }
+
+  // Production with no open months — show nothing
+  if (openMonthsFilter !== null && openMonthsFilter.length === 0) {
+    const calendarEntries = await prisma.calendarEntry.findMany({
+      where: { date: { gte: startDate, lt: endDate } },
+      orderBy: { date: "asc" },
+    });
+    const prevYear = year - 1;
+    const nextYear = year + 1;
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">{year}</h1>
+          <div className="flex items-center gap-2">
+            <Link href={`/calendar?year=${prevYear}`} className="p-2 rounded-md hover:bg-accent transition-colors"><ChevronLeft className="h-4 w-4" /></Link>
+            <Link href={`/calendar?year=${now.getFullYear()}`} className="px-3 py-1.5 text-sm rounded-md hover:bg-accent transition-colors border">Текущий год</Link>
+            <Link href={`/calendar?year=${nextYear}`} className="p-2 rounded-md hover:bg-accent transition-colors"><ChevronRight className="h-4 w-4" /></Link>
+          </div>
+        </div>
+        <YearHorizontalCalendar year={year} projects={[]} calendarEntries={calendarEntries.map((e) => ({ ...e, date: e.date.toISOString(), projectId: e.projectId ?? null }))} canDelete={false} />
+      </div>
+    );
+  }
+
+  const monthFilter: any = openMonthsFilter ? { month: { in: openMonthsFilter } } : {};
 
   const [projects, calendarEntries] = await Promise.all([
     prisma.project.findMany({

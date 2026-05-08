@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Search, Flower2, ChevronRight, X } from "lucide-react";
-import { AddFlowerButton, EditFlowerButton, DeleteFlowerButton, DeleteFlowerCategoryButton } from "./FlowersActions";
+import { AddFlowerButton, EditFlowerButton, DeleteFlowerButton, DeleteFlowerCategoryButton, EditFlowerCategoryButton } from "./FlowersActions";
 
 interface FlowerCategory {
   id: string;
@@ -90,7 +90,12 @@ export function FlowersClient({ categories, flowers, canEdit, canDelete }: Flowe
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                   <span className="truncate">{cat.name}</span>
                 </button>
-                {canDelete && <DeleteFlowerCategoryButton category={cat} />}
+                {canDelete && (
+                  <div className="flex items-center pr-1 gap-0.5">
+                    <EditFlowerCategoryButton category={cat} />
+                    <DeleteFlowerCategoryButton category={cat} />
+                  </div>
+                )}
               </div>
             ))}
           </div>
