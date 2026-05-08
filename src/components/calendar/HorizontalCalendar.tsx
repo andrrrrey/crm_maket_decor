@@ -76,12 +76,12 @@ function projectLabel(p: CalendarProject): string {
 }
 
 function getCellBgClass(entries: CalendarEntry[]): string {
-  const contractEntry = entries.find(
-    (e) => e.entryType === "contract_reservation" || e.entryType === "contract_montage"
+  const entry = entries.find(
+    (e) => e.entryType === "contract_reservation" || e.entryType === "contract_montage" || e.entryType === "client_reservation"
   );
-  if (!contractEntry) return "";
-  if (contractEntry.entryType === "contract_reservation") return "bg-green-200 dark:bg-green-900/60";
-  if (contractEntry.entryType === "contract_montage") return "bg-pink-200 dark:bg-pink-900/60";
+  if (!entry) return "";
+  if (entry.entryType === "contract_reservation" || entry.entryType === "client_reservation") return "bg-green-200 dark:bg-green-900/60";
+  if (entry.entryType === "contract_montage") return "bg-pink-200 dark:bg-pink-900/60";
   return "";
 }
 
@@ -195,7 +195,9 @@ function SingleMonthCalendar({
                 {/* Calendar entry chips */}
                 {dayEntries.map((e) => {
                   const isContractEntry = e.entryType === "contract_reservation" || e.entryType === "contract_montage";
-                  if (isContractEntry && e.projectId) {
+                  const isClientEntry = e.entryType === "client_reservation";
+                  if ((isContractEntry || isClientEntry) && e.projectId) {
+                    const href = isClientEntry ? `/clients/${e.projectId}` : `/contracts/${e.projectId}`;
                     return (
                       <div
                         key={e.id}
@@ -204,7 +206,7 @@ function SingleMonthCalendar({
                         title={e.label}
                       >
                         <Link
-                          href={`/contracts/${e.projectId}`}
+                          href={href}
                           className="truncate flex-1 hover:opacity-80 transition-opacity"
                         >
                           {e.label}
