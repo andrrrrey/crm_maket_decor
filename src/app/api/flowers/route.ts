@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       yearBought: (formData.get("yearBought") as string) || null,
       quantity: parseInt((formData.get("quantity") as string) || "0"),
       pricePerUnit: formData.get("pricePerUnit") ? parseFloat(formData.get("pricePerUnit") as string) : null,
+      articleNumber: (formData.get("articleNumber") as string) || null,
     };
 
     let photoUrl: string | undefined;
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     const flower = await prisma.flower.create({
-      data: { ...fields, ...(photoUrl ? { photoUrl } : {}), articleNumber: generateArticleNumber() } as any,
+      data: { ...fields, ...(photoUrl ? { photoUrl } : {}), articleNumber: fields.articleNumber || generateArticleNumber() } as any,
     });
     return NextResponse.json({ data: flower }, { status: 201 });
   }

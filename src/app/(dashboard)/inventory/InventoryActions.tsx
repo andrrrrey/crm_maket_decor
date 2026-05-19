@@ -117,6 +117,7 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
     name: "",
     color: "",
     quantity: "0",
+    articleNumber: "",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -145,11 +146,12 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
         color: form.color || undefined,
         quantity: Number(form.quantity) || 0,
         photoUrl,
+        articleNumber: form.articleNumber || undefined,
       }),
     });
     setLoading(false);
     setShow(false);
-    setForm({ categoryId: "", name: "", color: "", quantity: "0" });
+    setForm({ categoryId: "", name: "", color: "", quantity: "0", articleNumber: "" });
     setPhotoFile(null);
     router.refresh();
   };
@@ -194,6 +196,15 @@ export function AddItemButton({ categories }: { categories: Category[] }) {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Артикул</label>
+                <input
+                  value={form.articleNumber}
+                  onChange={(e) => setForm({ ...form, articleNumber: e.target.value })}
+                  placeholder="Оставьте пустым для автогенерации"
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
                 />
               </div>
@@ -255,7 +266,7 @@ interface EditItemCategory {
 }
 
 export function EditItemButton({ item, categories }: {
-  item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null; location?: string | null; totalDamages?: number; categoryId: string };
+  item: { id: string; name: string; color: string | null; quantity: number; status?: string; comment?: string | null; photoUrl?: string | null; location?: string | null; totalDamages?: number; categoryId: string; articleNumber?: string | null };
   categories: EditItemCategory[];
 }) {
   const router = useRouter();
@@ -274,6 +285,7 @@ export function EditItemButton({ item, categories }: {
     status: item.status ?? "site",
     comment: item.comment ?? "",
     location: item.location ?? "",
+    articleNumber: item.articleNumber ?? "",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -297,6 +309,7 @@ export function EditItemButton({ item, categories }: {
         status: form.status,
         comment: form.comment || undefined,
         location: form.location || undefined,
+        articleNumber: form.articleNumber || undefined,
         ...(photoUrl !== undefined && { photoUrl }),
       }),
     });
@@ -347,6 +360,14 @@ export function EditItemButton({ item, categories }: {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Артикул</label>
+                <input
+                  value={form.articleNumber}
+                  onChange={(e) => setForm({ ...form, articleNumber: e.target.value })}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
                 />
               </div>

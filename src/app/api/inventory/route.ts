@@ -14,6 +14,7 @@ const createItemSchema = z.object({
   color: z.string().optional(),
   quantity: z.number().default(0),
   photoUrl: z.string().optional(),
+  articleNumber: z.string().optional(),
 });
 
 const updateItemSchema = z.object({
@@ -25,6 +26,7 @@ const updateItemSchema = z.object({
   comment: z.string().optional(),
   photoUrl: z.string().optional(),
   location: z.string().optional(),
+  articleNumber: z.string().optional(),
   damageQuantity: z.number().optional(),
   damageDescription: z.string().optional(),
   categoryId: z.string().optional(),
@@ -95,6 +97,7 @@ export async function POST(req: NextRequest) {
           ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
           ...(data.location !== undefined && { location: data.location } as any),
           ...(data.categoryId && { categoryId: data.categoryId }),
+          ...(data.articleNumber !== undefined && { articleNumber: data.articleNumber } as any),
         },
       } as any);
       await logAction(user.id, Actions.INVENTORY_DAMAGE, "inventory", data.id, {
@@ -124,6 +127,7 @@ export async function POST(req: NextRequest) {
           ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
           ...(data.location !== undefined && { location: data.location } as any),
           ...(data.categoryId && { categoryId: data.categoryId }),
+          ...(data.articleNumber !== undefined && { articleNumber: data.articleNumber } as any),
         },
       } as any);
       await logAction(user.id, Actions.INVENTORY_DAMAGE, "inventory", data.id, {
@@ -144,6 +148,7 @@ export async function POST(req: NextRequest) {
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
         ...(data.location !== undefined && { location: data.location } as any),
         ...(data.categoryId && { categoryId: data.categoryId }),
+        ...(data.articleNumber !== undefined && { articleNumber: data.articleNumber } as any),
       },
     } as any);
     await logAction(user.id, Actions.INVENTORY_UPDATE, "inventory", data.id);
@@ -163,7 +168,7 @@ export async function POST(req: NextRequest) {
       color: parsed.data.color,
       quantity: parsed.data.quantity,
       photoUrl: parsed.data.photoUrl,
-      articleNumber: generateArticleNumber(),
+      articleNumber: parsed.data.articleNumber || generateArticleNumber(),
     } as any,
   });
   await logAction(user.id, Actions.INVENTORY_CREATE, "inventory", item.id, { name: item.name });

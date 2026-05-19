@@ -190,6 +190,7 @@ export function AddFabricButton({ categories }: { categories: FabricCategory[] }
     yearBought: "",
     supplier: "",
     notes: "",
+    articleNumber: "",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -212,11 +213,12 @@ export function AddFabricButton({ categories }: { categories: FabricCategory[] }
         yearBought: form.yearBought || undefined,
         supplier: form.supplier || undefined,
         notes: form.notes || undefined,
+        articleNumber: form.articleNumber || undefined,
       }),
     });
     setLoading(false);
     setShow(false);
-    setForm({ categoryId: "", material: "", color: "#cccccc", width: "", cuts: "", totalLength: "", yearBought: "", supplier: "", notes: "" });
+    setForm({ categoryId: "", material: "", color: "#cccccc", width: "", cuts: "", totalLength: "", yearBought: "", supplier: "", notes: "", articleNumber: "" });
     setPhotoFile(null);
     router.refresh();
   };
@@ -323,6 +325,15 @@ export function AddFabricButton({ categories }: { categories: FabricCategory[] }
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
                 />
               </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Артикул</label>
+                <input
+                  value={form.articleNumber}
+                  onChange={(e) => setForm({ ...form, articleNumber: e.target.value })}
+                  placeholder="Оставьте пустым для автогенерации"
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">Поставщик</label>
@@ -380,6 +391,7 @@ interface FabricData {
   yearBought: string | null;
   supplier: string | null;
   notes: string | null;
+  articleNumber: string | null;
 }
 
 export function EditFabricButton({ fabric, categories }: { fabric: FabricData; categories: FabricCategory[] }) {
@@ -396,6 +408,7 @@ export function EditFabricButton({ fabric, categories }: { fabric: FabricData; c
     yearBought: fabric.yearBought ?? "",
     supplier: fabric.supplier ?? "",
     notes: fabric.notes ?? "",
+    articleNumber: fabric.articleNumber ?? "",
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -418,6 +431,7 @@ export function EditFabricButton({ fabric, categories }: { fabric: FabricData; c
         yearBought: form.yearBought || undefined,
         supplier: form.supplier || undefined,
         notes: form.notes || undefined,
+        articleNumber: form.articleNumber || undefined,
       }),
     });
     setLoading(false);
@@ -527,6 +541,14 @@ export function EditFabricButton({ fabric, categories }: { fabric: FabricData; c
                 <input
                   value={form.cuts}
                   onChange={(e) => setForm({ ...form, cuts: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Артикул</label>
+                <input
+                  value={form.articleNumber}
+                  onChange={(e) => setForm({ ...form, articleNumber: e.target.value })}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
                 />
               </div>
