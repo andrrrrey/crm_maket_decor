@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Flower2 } from "lucide-react";
+import Image from "next/image";
 
 const loginSchema = z.object({
   login: z.string().min(1, "Введите логин"),
@@ -62,12 +62,9 @@ function LoginForm() {
         <div className="glass-card p-8">
           {/* Логотип/заголовок */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-              <Flower2 className="h-8 w-8 text-primary" />
+            <div className="flex items-center justify-center mb-4">
+              <Image src="/logo.png" alt="Maket Decor" width={220} height={82} priority />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Maket Decor
-            </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               CRM-система
             </p>
