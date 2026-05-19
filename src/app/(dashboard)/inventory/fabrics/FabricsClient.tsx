@@ -231,6 +231,7 @@ export function FabricsClient({
                               yearBought: fabric.yearBought,
                               supplier: fabric.supplier,
                               notes: fabric.notes,
+                              articleNumber: fabric.articleNumber,
                             }}
                             categories={categories}
                           />
