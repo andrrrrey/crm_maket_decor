@@ -44,7 +44,19 @@ export async function POST(req: NextRequest) {
   if (body.id) {
     const member = await prisma.staff.update({
       where: { id: body.id },
-      data: { ...body, id: undefined },
+      data: {
+        ...(body.section !== undefined && { section: body.section }),
+        ...(body.fullName !== undefined && { fullName: body.fullName }),
+        ...(body.position !== undefined && { position: body.position }),
+        phone: body.phone ?? null,
+        hasVehicle: body.hasVehicle ?? null,
+        startDate: body.startDate ?? null,
+        birthDate: body.birthDate ? new Date(body.birthDate) : null,
+        address: body.address ?? null,
+        passport: body.passport ?? null,
+        telegramLink: body.telegramLink ?? null,
+        notes: body.notes ?? null,
+      },
     });
     await logAction(user.id, Actions.STAFF_UPDATE, "staff", body.id);
     return NextResponse.json({ data: member });

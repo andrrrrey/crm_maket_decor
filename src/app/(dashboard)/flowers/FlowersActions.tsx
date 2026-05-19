@@ -178,6 +178,7 @@ interface Flower {
   quantity: number;
   pricePerUnit: string | null;
   photoUrl: string | null;
+  articleNumber: string | null;
 }
 
 export function AddFlowerButton({ categories }: { categories: Category[] }) {
@@ -193,6 +194,7 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
     yearBought: "",
     quantity: "0",
     pricePerUnit: "",
+    articleNumber: "",
   });
   const [photo, setPhoto] = useState<File | null>(null);
 
@@ -208,11 +210,12 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
     if (form.yearBought) fd.append("yearBought", form.yearBought);
     fd.append("quantity", form.quantity || "0");
     if (form.pricePerUnit) fd.append("pricePerUnit", form.pricePerUnit);
+    if (form.articleNumber) fd.append("articleNumber", form.articleNumber);
     if (photo) fd.append("photo", photo);
     await fetch("/api/flowers", { method: "POST", body: fd });
     setLoading(false);
     setShow(false);
-    setForm({ categoryId: "", name: "", color: "", material: "", height: "", yearBought: "", quantity: "0", pricePerUnit: "" });
+    setForm({ categoryId: "", name: "", color: "", material: "", height: "", yearBought: "", quantity: "0", pricePerUnit: "", articleNumber: "" });
     setPhoto(null);
     router.refresh();
   };
@@ -284,6 +287,12 @@ export function AddFlowerButton({ categories }: { categories: Category[] }) {
                 <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
+              <div className="col-span-2">
+                <label className="text-xs text-muted-foreground">Артикул</label>
+                <input value={form.articleNumber} onChange={(e) => setForm({ ...form, articleNumber: e.target.value })}
+                  placeholder="Оставьте пустым для автогенерации"
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -316,6 +325,7 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
     yearBought: flower.yearBought ?? "",
     quantity: flower.quantity.toString(),
     pricePerUnit: flower.pricePerUnit ?? "",
+    articleNumber: flower.articleNumber ?? "",
   });
   const [photo, setPhoto] = useState<File | null>(null);
 
@@ -332,6 +342,7 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
     if (form.yearBought) fd.append("yearBought", form.yearBought);
     fd.append("quantity", form.quantity || "0");
     if (form.pricePerUnit) fd.append("pricePerUnit", form.pricePerUnit);
+    if (form.articleNumber) fd.append("articleNumber", form.articleNumber);
     if (photo) fd.append("photo", photo);
     await fetch("/api/flowers", { method: "POST", body: fd });
     setLoading(false);
@@ -400,6 +411,11 @@ export function EditFlowerButton({ flower, categories }: { flower: Flower; categ
               <div className="col-span-2">
                 <label className="text-xs text-muted-foreground">Новое фото</label>
                 <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-muted-foreground">Артикул</label>
+                <input value={form.articleNumber} onChange={(e) => setForm({ ...form, articleNumber: e.target.value })}
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none" />
               </div>
             </div>

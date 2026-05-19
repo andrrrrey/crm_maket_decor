@@ -52,7 +52,7 @@ export function WallpaperProvider({ children }: { children: ReactNode }) {
   const wallpaper = WALLPAPERS.find((w) => w.id === wallpaperId);
   let wallpaperUrl = wallpaper?.url || "";
   if (wallpaperId === "custom" && customUrl) {
-    wallpaperUrl = `url(${customUrl})`;
+    wallpaperUrl = customUrl;
   }
 
   return (

@@ -32,7 +32,9 @@ export async function GET(req: NextRequest) {
     where.status = { not: "CONTRACT" };
   }
 
-  if (user.role === "DIRECTOR" && managerId) {
+  if (shouldFilterByManager(user.role)) {
+    where.managerId = user.id;
+  } else if (user.role === "DIRECTOR" && managerId) {
     where.managerId = managerId;
   }
 

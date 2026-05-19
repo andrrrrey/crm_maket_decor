@@ -132,7 +132,8 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      {/* Full year horizontal scroll calendar */}
+      {/* Full year horizontal scroll calendar — half screen width */}
+      <div className="w-full max-w-[50%]">
       <YearHorizontalCalendar
         year={year}
         projects={projects.map((p) => ({
@@ -146,6 +147,7 @@ export default async function CalendarPage({
         }))}
         canDelete={user.role === "DIRECTOR"}
       />
+      </div>
     </div>
   );
 }

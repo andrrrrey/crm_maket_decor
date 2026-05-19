@@ -100,7 +100,7 @@ export function NewUserForm() {
       {open && (
         <div
           className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={close}
+          onClick={(e) => { if (e.target === e.currentTarget) close(); }}
         >
           <div
             className="bg-background rounded-lg border shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto"

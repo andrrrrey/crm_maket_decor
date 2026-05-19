@@ -20,6 +20,7 @@ const createSchema = z.object({
   yearBought: z.string().optional(),
   supplier: z.string().optional(),
   notes: z.string().optional(),
+  articleNumber: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
         ...(body.yearBought !== undefined && { yearBought: body.yearBought }),
         ...(body.supplier !== undefined && { supplier: body.supplier }),
         ...(body.notes !== undefined && { notes: body.notes }),
+        ...(body.articleNumber !== undefined && { articleNumber: body.articleNumber }),
       },
     });
     await logAction(user.id, Actions.FABRIC_UPDATE, "fabric", body.id);
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const fabric = await (prisma as any).fabric.create({ data: { ...parsed.data, articleNumber: generateArticleNumber() } });
+  const fabric = await (prisma as any).fabric.create({ data: { ...parsed.data, articleNumber: parsed.data.articleNumber || generateArticleNumber() } });
   await logAction(user.id, Actions.FABRIC_CREATE, "fabric", fabric.id, {
     material: fabric.material,
     color: fabric.color,
