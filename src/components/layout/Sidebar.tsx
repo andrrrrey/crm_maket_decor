@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -72,13 +73,12 @@ export function Sidebar() {
       {/* Логотип */}
       <div className="flex items-center h-14 px-3 border-b border-white/10 dark:border-white/5">
         {!collapsed && (
-          <span className="font-bold text-sidebar-foreground text-sm truncate flex-1 flex items-center gap-2">
-            <Flower2 className="h-5 w-5 text-primary shrink-0" />
-            Maket Decor
+          <span className="flex-1 flex items-center overflow-hidden">
+            <Image src="/logo.png" alt="Maket Decor" width={130} height={48} className="object-contain" />
           </span>
         )}
         {collapsed && (
-          <Flower2 className="h-5 w-5 text-primary mx-auto" />
+          <Image src="/logo.png" alt="Maket Decor" width={32} height={32} className="mx-auto object-contain" />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
