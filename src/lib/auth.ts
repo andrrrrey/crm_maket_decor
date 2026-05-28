@@ -3,7 +3,6 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import type { NextAuthConfig } from "next-auth";
-import type { JWT } from "next-auth/jwt";
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -63,13 +62,6 @@ export const authConfig: NextAuthConfig = {
         token.wallpaper = (user as any).wallpaper;
         token.theme = (user as any).theme;
         token.hasInfoAccess = (user as any).hasInfoAccess;
-      } else if (token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { hasInfoAccess: true, isActive: true },
-        });
-        if (!dbUser || !dbUser.isActive) return null as unknown as JWT;
-        token.hasInfoAccess = dbUser.hasInfoAccess;
       }
       return token;
     },
@@ -81,7 +73,21 @@ export const authConfig: NextAuthConfig = {
         (session.user as any).avatarUrl = token.avatarUrl;
         (session.user as any).wallpaper = token.wallpaper;
         (session.user as any).theme = token.theme;
-        (session.user as any).hasInfoAccess = token.hasInfoAccess;
+        // Refresh hasInfoAccess from DB so admin changes take effect without logout.
+        // The session callback runs only in Node.js API context, not in edge middleware.
+        if (token.id) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: token.id as string },
+              select: { hasInfoAccess: true },
+            });
+            (session.user as any).hasInfoAccess = dbUser?.hasInfoAccess ?? token.hasInfoAccess;
+          } catch {
+            (session.user as any).hasInfoAccess = token.hasInfoAccess;
+          }
+        } else {
+          (session.user as any).hasInfoAccess = token.hasInfoAccess;
+        }
       }
       return session;
     },
