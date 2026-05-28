@@ -71,10 +71,10 @@ export function Sidebar() {
       )}
     >
       {/* Логотип */}
-      <div className="flex items-center h-14 px-3 border-b border-white/10 dark:border-white/5">
+      <div className="flex items-center h-12 px-3 border-b border-white/10 dark:border-white/5">
         {!collapsed && (
           <span className="flex-1 flex items-center overflow-hidden">
-            <Image src="/logo.png" alt="Maket Decor" width={130} height={48} className="object-contain" />
+            <Image src="/logo.png" alt="Maket Decor" width={90} height={34} className="object-contain" />
           </span>
         )}
         {collapsed && (
@@ -93,7 +93,7 @@ export function Sidebar() {
       </div>
 
       {/* Навигация */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto pt-5 pb-3 px-2 space-y-0.5">
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive =

@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import type { NextAuthConfig } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -62,6 +63,13 @@ export const authConfig: NextAuthConfig = {
         token.wallpaper = (user as any).wallpaper;
         token.theme = (user as any).theme;
         token.hasInfoAccess = (user as any).hasInfoAccess;
+      } else if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { hasInfoAccess: true, isActive: true },
+        });
+        if (!dbUser || !dbUser.isActive) return null as unknown as JWT;
+        token.hasInfoAccess = dbUser.hasInfoAccess;
       }
       return token;
     },

@@ -21,6 +21,7 @@ const updateSchema = z.object({
   orgAmount: z.number().optional().nullable(),
   notes: z.string().optional(),
   fabricNote: z.string().optional().nullable(),
+  isClosed: z.boolean().optional(),
 });
 
 export async function GET(
@@ -97,6 +98,7 @@ export async function PUT(
       ...(data.orgAmount !== undefined && { orgAmount: data.orgAmount }),
       ...(data.notes !== undefined && { notes: data.notes }),
       ...(data.fabricNote !== undefined && { fabricNote: data.fabricNote }),
+      ...(data.isClosed !== undefined && { isClosed: data.isClosed }),
     },
   });
 

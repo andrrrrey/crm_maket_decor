@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MOCKUP_STATUS_LABELS } from "@/lib/constants";
 import type { ContractMockupStatus, ContractStatus } from "@/types";
-import { Pencil, X, Save, ChevronDown, Upload, Trash2 } from "lucide-react";
+import { Pencil, X, Save, ChevronDown, Upload, Trash2, LockOpen, Lock } from "lucide-react";
 import { FileUpload } from "@/components/files/FileUpload";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
@@ -429,20 +429,73 @@ export function ContractDeleteButton({
   );
 }
 
+export function ContractCloseButton({
+  contractId,
+  isClosed,
+}: {
+  contractId: string;
+  isClosed: boolean;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+
+  const handleToggle = async () => {
+    setLoading(true);
+    await fetch(`/api/contracts/${contractId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isClosed: !isClosed }),
+    });
+    setLoading(false);
+    setShowDialog(false);
+    router.refresh();
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setShowDialog(true)}
+        disabled={loading}
+        className={`p-2 rounded-md hover:bg-accent transition-colors ${isClosed ? "text-green-600" : "text-muted-foreground"}`}
+        title={isClosed ? "Открыть договор" : "Закрыть договор"}
+      >
+        {isClosed ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+      </button>
+      <ConfirmDialog
+        open={showDialog}
+        title={isClosed ? "Открыть договор?" : "Закрыть договор?"}
+        description={isClosed ? "Договор будет снова помечен как открытый." : "Точно хотите закрыть договор?"}
+        confirmLabel={isClosed ? "Открыть" : "Закрыть"}
+        onConfirm={handleToggle}
+        onCancel={() => setShowDialog(false)}
+        loading={loading}
+      />
+    </>
+  );
+}
+
 export function ContractFileUpload({ contractId }: { contractId: string }) {
   const router = useRouter();
   const [showUpload, setShowUpload] = useState(false);
-  const [fileType, setFileType] = useState<"contract" | "invoice" | "other">("contract");
+  const [fileType, setFileType] = useState<"estimate" | "contract" | "invoice" | "other">("contract");
 
   const handleUpload = async (files: File[]) => {
     for (const file of files) {
       const form = new FormData();
       form.append("file", file);
-      form.append("fileType", fileType);
-      await fetch(`/api/contracts/${contractId}/files`, {
-        method: "POST",
-        body: form,
-      });
+      if (fileType === "estimate") {
+        await fetch(`/api/contracts/${contractId}/estimates`, {
+          method: "POST",
+          body: form,
+        });
+      } else {
+        form.append("fileType", fileType);
+        await fetch(`/api/contracts/${contractId}/files`, {
+          method: "POST",
+          body: form,
+        });
+      }
     }
     router.refresh();
     setShowUpload(false);
@@ -469,6 +522,7 @@ export function ContractFileUpload({ contractId }: { contractId: string }) {
                 onChange={(e) => setFileType(e.target.value as typeof fileType)}
                 className="w-full mt-1 px-3 py-2 border rounded-md text-sm bg-background focus:ring-1 focus:ring-ring outline-none"
               >
+                <option value="estimate">Смета</option>
                 <option value="contract">Договор</option>
                 <option value="invoice">Счёт</option>
                 <option value="other">Другое</option>

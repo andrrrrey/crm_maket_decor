@@ -146,6 +146,7 @@ model Contract {
   orgAmount        Decimal?
   notes            String?
   fabricNote       String?
+  isClosed         Boolean              @default(false)
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 

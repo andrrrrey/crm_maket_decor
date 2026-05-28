@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "./DataTable";
 import { MockupStatusBadge } from "@/components/shared/StatusBadge";
@@ -161,16 +161,72 @@ const columns: ColumnDef<ContractWithManager>[] = [
   },
 ];
 
+const MONTH_LABELS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+
 interface ContractsTableProps {
   data: ContractWithManager[];
 }
 
 export function ContractsTable({ data }: ContractsTableProps) {
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "open" | "closed">("all");
+
+  const years = useMemo(() => {
+    const set = new Set(data.map((c) => new Date(c.installDate).getFullYear().toString()));
+    return Array.from(set).sort((a, b) => Number(a) - Number(b));
+  }, [data]);
+
+  const filtered = useMemo(() => {
+    return data.filter((c) => {
+      const d = new Date(c.installDate);
+      if (filterYear !== "all" && d.getFullYear().toString() !== filterYear) return false;
+      if (filterMonth !== "all" && (d.getMonth() + 1).toString() !== filterMonth) return false;
+      if (filterStatus === "open" && (c as any).isClosed) return false;
+      if (filterStatus === "closed" && !(c as any).isClosed) return false;
+      return true;
+    });
+  }, [data, filterYear, filterMonth, filterStatus]);
+
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-      searchPlaceholder="Поиск по договорам..."
-    />
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={filterYear}
+          onChange={(e) => setFilterYear(e.target.value)}
+          className="px-3 py-1.5 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+        >
+          <option value="all">Все годы</option>
+          {years.map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+        <select
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+          className="px-3 py-1.5 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+        >
+          <option value="all">Все месяцы</option>
+          {MONTH_LABELS.map((label, idx) => (
+            <option key={idx + 1} value={(idx + 1).toString()}>{label}</option>
+          ))}
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value as "all" | "open" | "closed")}
+          className="px-3 py-1.5 text-sm border rounded-md bg-background focus:ring-1 focus:ring-ring outline-none"
+        >
+          <option value="all">Все договоры</option>
+          <option value="open">Открытые</option>
+          <option value="closed">Закрытые</option>
+        </select>
+      </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        searchPlaceholder="Поиск по договорам..."
+        getRowClassName={(row) => (row as any).isClosed ? "bg-green-50 dark:bg-green-900/10" : ""}
+      />
+    </div>
   );
 }
