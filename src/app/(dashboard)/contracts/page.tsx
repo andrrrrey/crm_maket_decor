@@ -18,6 +18,7 @@ export default async function ContractsPage() {
   const isDirector = user.role === "DIRECTOR";
 
   const contracts = await prisma.contract.findMany({
+    where: user.role === "MANAGER" ? { managerId: user.id } : undefined,
     include: {
       manager: { select: { id: true, name: true } },
       sourceClient: { select: { id: true, clientName: true } },
@@ -65,7 +66,7 @@ export default async function ContractsPage() {
         <div>
           <h1 className="text-2xl font-bold">Договоры</h1>
           <p className="text-sm text-muted-foreground">
-            {contracts.length} договоров
+            {contracts.length} {isDirector ? "договоров" : "моих договоров"}
           </p>
         </div>
         {(user.role === "DIRECTOR" || user.role === "MANAGER") && (
