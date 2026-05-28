@@ -23,6 +23,7 @@ import {
   ContractFileUpload,
   ContractStatusSelect,
   ContractFabricNote,
+  ContractCloseButton,
 } from "./ContractEditForm";
 import { ContractTaskList } from "./ContractTaskList";
 import { ContractImageUpload, ContractImageDelete } from "./ContractImages";
@@ -132,6 +133,10 @@ export default async function ContractPage({
         </div>
         {canEdit && (
           <div className="flex items-center gap-1">
+            <ContractCloseButton
+              contractId={contract.id}
+              isClosed={contract.isClosed}
+            />
             <ContractDeleteButton
               contractId={contract.id}
               managerId={contract.managerId}
@@ -260,7 +265,7 @@ export default async function ContractPage({
             <FileListWithDelete
               files={contract.estimates.map((f) => ({ ...f, uploadedAt: f.uploadedAt.toISOString() }))}
               canDelete={canEdit}
-              deleteUrl={`/api/contracts/${contract.id}/files`}
+              deleteUrl={`/api/contracts/${contract.id}/estimates`}
             />
           </div>
           <div className="p-4 rounded-lg border bg-card">

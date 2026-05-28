@@ -5,14 +5,13 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { useState } from "react";
-import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DataTableProps<TData> {
@@ -20,6 +19,7 @@ interface DataTableProps<TData> {
   data: TData[];
   searchPlaceholder?: string;
   searchColumn?: string;
+  getRowClassName?: (row: TData) => string;
 }
 
 export function DataTable<TData>({
@@ -27,6 +27,7 @@ export function DataTable<TData>({
   data,
   searchPlaceholder = "Поиск...",
   searchColumn,
+  getRowClassName,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -38,12 +39,10 @@ export function DataTable<TData>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     state: { sorting, columnFilters, globalFilter },
-    initialState: { pagination: { pageSize: 20 } },
   });
 
   return (
@@ -113,7 +112,7 @@ export function DataTable<TData>({
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-t hover:bg-muted/30 transition-colors"
+                    className={cn("border-t hover:bg-muted/30 transition-colors", getRowClassName?.(row.original))}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-3 py-2.5">
@@ -131,29 +130,6 @@ export function DataTable<TData>({
         </div>
       </div>
 
-      {/* Пагинация */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          Страница {table.getState().pagination.pageIndex + 1} из{" "}
-          {table.getPageCount()}
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="p-1 rounded hover:bg-accent disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="p-1 rounded hover:bg-accent disabled:opacity-40"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

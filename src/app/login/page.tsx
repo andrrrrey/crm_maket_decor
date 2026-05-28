@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
   login: z.string().min(1, "Введите логин"),
@@ -29,6 +30,7 @@ function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -101,14 +103,23 @@ function LoginForm() {
               >
                 Пароль
               </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                {...register("password")}
-                className="w-full px-3 py-2 border border-white/30 dark:border-white/10 rounded-lg bg-white/50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:border-transparent outline-none transition backdrop-blur-sm"
-                placeholder="Введите пароль"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  {...register("password")}
+                  className="w-full px-3 py-2 pr-10 border border-white/30 dark:border-white/10 rounded-lg bg-white/50 dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/40 focus:border-transparent outline-none transition backdrop-blur-sm"
+                  placeholder="Введите пароль"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {errors.password && (
                 <p className="mt-1 text-xs text-red-500">
                   {errors.password.message}
